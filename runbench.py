@@ -5,14 +5,16 @@ import traceback as tb
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('--skip_bench', action='store_true', default=False, 
-                        help='If this flag is true, benchmark will be skipped.')
-    parser.add_argument('--skip_plot', action='store_true', default=False, 
-                        help=('If this flag is true, no log will be plotted.'))
+    parser.add_argument(
+        '--skip_bench', action='store_true', default=False,
+        help='If this flag is true, benchmark will be skipped.')
+    parser.add_argument(
+        '--skip_plot', action='store_true', default=False,
+        help=('If this flag is true, no log will be plotted.'))
 
     try:
         args = parser.parse_args()
-    except:
+    except BaseException:
         raise
     return args
 

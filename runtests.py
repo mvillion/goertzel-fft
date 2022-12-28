@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import
+from __future__ import print_function
+
 import unittest
 import logging
 
 
 def _check_extension_is_built():
-    import os.path
+    from pathlib import Path
     import sys
 
     if sys.version_info[0] >= 3:
@@ -21,9 +23,9 @@ def _check_extension_is_built():
 
     for ext in exts:
         fext = '.pyd' if sys.platform == 'win32' else '.so'
-        fn = os.path.join(*ext.name.split('.'))
-        fn = os.path.abspath('{}{}'.format(fn, fext))
-        if not os.path.exists(fn):
+        fn = Path(*ext.name.split('.'))
+        fn = Path(fn.parent).glob("%s*%s" % (fn.name, fext))
+        if len(list(fn)) == 0:
             all_extensions_are_built = False
             break
 
@@ -32,8 +34,8 @@ def _check_extension_is_built():
 
 
 def _build_ext():
-    from subprocess import Popen, PIPE, STDOUT
-    cmd = 'python setup.py build_ext --inplace clean --all'
+    from subprocess import Popen
+    cmd = "python3 setup.py build_ext --inplace clean --all"
     proc = Popen(cmd.split(' '))
     out, _ = proc.communicate()
 

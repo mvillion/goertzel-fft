@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function
-from setuptools import setup, find_packages
+from setuptools import find_packages
 
 import sys
 if sys.version_info[0] >= 3:
@@ -49,10 +49,32 @@ def setup_package():
     setup(**metadata)
 
 
-if __name__ == '__main__':
-    try:
-        setup_package()
-    except Exception as ex:
-        print(ex)
+def configuration(parent_package="", top_path=None):
+    from numpy.distutils.misc_util import Configuration
+    from numpy.distutils.misc_util import get_info
+    from numpy.distutils.log import set_verbosity
 
-    del builtins.__PKG_SETUP__
+    # necessary for the half-float d-type.
+    info = get_info("npymath")
+
+    config = Configuration("gofft_directory", parent_package, top_path)
+    config.add_extension(
+        "dsp_ext", ["gofft/alg/src/dsp.c", "gofft/alg/src/main.c"],
+        extra_info=info)
+    set_verbosity(5, force=True)
+    return config
+
+
+if __name__ == '__main__':
+    use_setuptools = False
+    if use_setuptools:
+        from setuptools import setup
+        try:
+            setup_package()
+        except Exception as ex:
+            print(ex)
+
+        del builtins.__PKG_SETUP__
+    else:
+        from numpy.distutils.core import setup
+        setup(configuration=configuration)

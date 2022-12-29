@@ -2,13 +2,9 @@
 #include <stdlib.h>
 #include "dsp.h"
 
-void goertzel(
-    double *data, long data_len, int fs, double ft, int filter_size,
-    double *out)
+void goertzel(double *data, long data_len, double k, double *out)
 {
-    double k = floor(0.5 + ((double)(filter_size*ft) / (double)fs));
-
-    double omega = 2.0*M_PI*k/(double)filter_size;
+    double omega = 2.0*M_PI*k/data_len;
     double sine = sin(omega);
     double cosine = cos(omega);
     double coeff = 2.0*cosine;
@@ -32,6 +28,14 @@ void goertzel(
         q1 = q0;
     }
 
+    // note: dm00446805-the-goertzel-algorithm-to-compute-individual-terms-of-the-discrete-fourier-transform-dft-stmicroelectronics-1.pdf
+    // suggests for non-integer k:
+//     w2 = 2*pi*k;
+//     cw2 = cos(w2);
+//     sw2 = sin(w2);
+//     I = It*cw2 + Q*sw2;
+//     Q = -It*sw2 + Q*cw2;
+
     out[0] = q1*cosine-q2; // real
     out[1] = q1*sine; // imag
 }
@@ -40,7 +44,9 @@ double goertzel_mag(
     double *data, long data_len, int fs, double ft, int filter_size)
 {
     double out_cx[2];
-    goertzel(data, data_len, fs, ft, filter_size, out_cx);
+    double k = floor(0.5 + ((double)(filter_size*ft) / (double)fs));
+
+    goertzel(data, data_len, k, out_cx);
     double sf = (double)data_len; // scale factor: for normalization
     double real = out_cx[0]/sf;
     double imag = out_cx[1]/sf;

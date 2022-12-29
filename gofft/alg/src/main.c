@@ -4,14 +4,10 @@
 static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
 {
     PyArrayObject *in_data;
-    int filter_size;
-    int fs;
-    double ft;
+    double k;
 
-    if (!PyArg_ParseTuple(args, "O!idi",
-        &PyArray_Type, &in_data, &fs, &ft, &filter_size)) {
+    if (!PyArg_ParseTuple(args, "O!d", &PyArray_Type, &in_data, &k))
         return NULL;
-    }
     if (in_data == NULL) return NULL;
 
     // Ensure the input array is contiguous.
@@ -35,7 +31,7 @@ static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
 
     for (npy_intp i_data = 0; i_data < n_data; i_data++)
     {
-        goertzel(data, data_len, fs, ft, filter_size, out_res);
+        goertzel(data, data_len, k, out_res);
         data += data_len;
         out_res += 2;
     }

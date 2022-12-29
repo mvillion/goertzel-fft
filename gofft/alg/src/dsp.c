@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "dsp.h"
 
@@ -5,26 +6,19 @@ void goertzel(
     double *data, long data_len, int fs, double ft, int filter_size,
     double *out)
 {
-    double k;		// Related to frequency bins
-    double omega;
-    double sine, cosine, coeff, sf;
-    double q0, q1, q2;
+    double k = floor(0.5 + ((double)(filter_size*ft) / (double)fs));
+
+    double omega = 2.0*M_PI*k/(double)filter_size;
+    double sine = sin(omega);
+    double cosine = cos(omega);
+    double coeff = 2.0*cosine;
+
+    double q0 = 0.0;
+    double q1 = 0.0;
+    double q2 = 0.0;
+
     long int i;
-    long int dlen;
-
-    k = floor(0.5 + ((double)(filter_size*ft) / (double)fs));
-
-    omega = 2.0*M_PI*k/(double)filter_size;
-    sine = sin(omega);
-    cosine = cos(omega);
-    coeff = 2.0*cosine;
-    sf = (double)data_len;		// scale factor: for normalization
-
-    q0 = 0.0;
-    q1 = 0.0;
-    q2 = 0.0;
-
-    dlen = data_len - data_len%3;
+    long int dlen = data_len - data_len%3;
     for (i = 0; i < dlen; i+=3)
     {
         q0 = coeff*q1 - q2 + data[i];
@@ -38,8 +32,8 @@ void goertzel(
         q1 = q0;
     }
 
-    out[0] = (q1 - q2*cosine)/sf; // real
-    out[1] = (q2*sine)/sf; // imag
+    out[0] = q1*cosine-q2; // real
+    out[1] = q1*sine; // imag
 }
 
 double goertzel_mag(
@@ -47,8 +41,9 @@ double goertzel_mag(
 {
     double out_cx[2];
     goertzel(data, data_len, fs, ft, filter_size, out_cx);
-    double real = out_cx[0];
-    double imag = out_cx[1];
+    double sf = (double)data_len; // scale factor: for normalization
+    double real = out_cx[0]/sf;
+    double imag = out_cx[1]/sf;
     return sqrt(real*real + imag*imag);
 }
 

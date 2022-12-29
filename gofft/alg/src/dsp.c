@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include "dsp.h"
 
-double goertzel(double* data, long data_len, int fs, double ft,
-                int filter_size)
+void goertzel(
+    double *data, long data_len, int fs, double ft, int filter_size,
+    double *out)
 {
     double k;		// Related to frequency bins
     double omega;
-    double sine, cosine, coeff, sf, mag;
-    double q0, q1, q2, real, imag;
+    double sine, cosine, coeff, sf;
+    double q0, q1, q2;
     long int i;
     long int dlen;
 
@@ -37,11 +38,18 @@ double goertzel(double* data, long data_len, int fs, double ft,
         q1 = q0;
     }
 
-    real = (q1 - q2*cosine)/sf;
-    imag = (q2*sine)/sf;
-    mag = sqrt(real*real + imag*imag);
+    out[0] = (q1 - q2*cosine)/sf; // real
+    out[1] = (q2*sine)/sf; // imag
+}
 
-    return mag;
+double goertzel_mag(
+    double *data, long data_len, int fs, double ft, int filter_size)
+{
+    double out_cx[2];
+    goertzel(data, data_len, fs, ft, filter_size, out_cx);
+    double real = out_cx[0];
+    double imag = out_cx[1];
+    return sqrt(real*real + imag*imag);
 }
 
 double goertzel_avx(double* data, long data_len, int fs, double ft,
@@ -87,12 +95,12 @@ double goertzel_avx(double* data, long data_len, int fs, double ft,
     return mag;
 }
 
-void goertzel_m_dumb(
+void goertzel_mag_m_dumb(
     double* data, long int data_len, int fs, double* ft,  int ft_num,
     int filter_size, double* mag)
 {
     for (int cnt = 0; cnt < ft_num; cnt++)
-        mag[cnt] = goertzel(data, data_len, fs, ft[cnt], filter_size);
+        mag[cnt] = goertzel_mag(data, data_len, fs, ft[cnt], filter_size);
 }
 
 void goertzel_m(double* data, long int data_len, int fs, double* ft,

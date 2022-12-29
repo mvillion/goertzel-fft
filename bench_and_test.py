@@ -18,18 +18,24 @@ def bench_goertzel(data_len, n_test=10000):
     in_data = rng.random((n_test, data_len), np.float64)
 
     cost = np.empty(len(BenchType))
-    x = np.arange(data_len)
-    F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
-    t0 = time()
-    out_dft = in_data @ F
-    cost[BenchType.dft.value] = time()-t0
+    error = np.empty(len(BenchType))
+
+    # protection against memory errors
+    if data_len < 1024:
+        x = np.arange(data_len)
+        F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
+        t0 = time()
+        out_dft = in_data @ F
+        cost[BenchType.dft.value] = time()-t0
+    else:
+        out_dft = np.nan
+        cost[BenchType.dft.value] = np.nan
 
     t0 = time()
     out_fft = np.fft.fft(in_data)
     cost[BenchType.fft.value] = time()-t0
-
-    max_diff = (out_fft-out_dft).std(axis=-1).max()
-    print("maximal std diff between dft and fft %g" % max_diff)
+    error[BenchType.dft.value] = (out_fft-out_dft).std(axis=-1).max()
+    error[BenchType.fft.value] = np.nan
 
     out_goertzel = np.empty_like(out_fft)
     cost_goertzel = 0
@@ -40,16 +46,48 @@ def bench_goertzel(data_len, n_test=10000):
         out_goertzel[:, k] = out_k[:, 0]+1j*out_k[:, 1]
 
     cost[BenchType.goertzel.value] = cost_goertzel/data_len
+    error[BenchType.goertzel.value] = (out_goertzel-out_fft).std(axis=-1).max()
 
-    max_diff = (out_goertzel-out_dft).std(axis=-1).max()
-    print("maximal std diff between dft and goertzel %g" % max_diff)
+    return cost, error
 
-    return cost
+
+def bench_range(len_range, n_test=10000):
+    cost = np.empty((len(BenchType), len(len_range)))
+    error = np.empty((len(BenchType), len(len_range)))
+    for i, data_len in enumerate(len_range):
+        print("data_len %d" % data_len)
+        cost[:, i], error[:, i] = bench_goertzel(data_len, n_test=n_test)
+
+    return cost, error
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("dummy exit")
         sys.exit()
-    cost = bench_goertzel(16)
+    cost, _ = bench_goertzel(16)
     print(", ".join(["%s %f" % (k.name, cost[k.value]) for k in BenchType]))
+
+    len_range = np.concatenate((
+        np.arange(1, 64), np.arange(64, 1024, 64),
+        2**np.arange(10, 17)))
+    cost, error = bench_range(len_range, n_test=10)
+
+    from matplotlib import pyplot as plt
+    plt.figure(1)
+    for k in BenchType:
+        plt.plot(len_range, 10*np.log10(cost[k.value, :]), label=k.name)
+    plt.legend()
+    plt.ylabel("time (dBs)")
+    plt.xlabel("length (samples)")
+
+    plt.figure(2)
+    for k in BenchType:
+        if np.isnan(error[k.value, :]).all():
+            continue
+        plt.plot(len_range, error[k.value, :], label="%s vs fft" % k.name)
+    plt.legend()
+    plt.ylabel("error")
+    plt.xlabel("length (samples)")
+    plt.show()
+

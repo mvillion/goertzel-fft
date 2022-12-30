@@ -13,6 +13,7 @@ class BenchType(Enum):
     goertzel = 2
     goertzel_rad2_py = 3
     goertzel_rad2 = 4
+    goertzel_rad2_sse = 5
 
 
 def goertzel_rad2_py(data, k):
@@ -75,13 +76,14 @@ def bench_goertzel(data_len, n_test=10000):
         BenchType.goertzel: dsp_ext.goertzel,
         BenchType.goertzel_rad2_py: goertzel_rad2_py,
         BenchType.goertzel_rad2: dsp_ext.goertzel_rad2,
+        BenchType.goertzel_rad2_sse: dsp_ext.goertzel_rad2_sse,
     }
     for etype, fun in bench2fun.items():
         out = np.empty_like(out_fft)
         cost_goertzel = 0
         for k in range(data_len):
             t0 = time()
-            out_k = dsp_ext.goertzel(in_data, k)
+            out_k = fun(in_data, k)
             cost_goertzel += time()-t0
             out[:, k] = out_k
         cost[etype.value] = cost_goertzel/data_len

@@ -43,6 +43,13 @@ static PyObject* dsp_goertzel_template(
             data += data_len;
             out_res += 2;
         }
+    else if (fun_index == 2)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            goertzel_rad2_sse(data, data_len, k, out_res);
+            data += data_len;
+            out_res += 2;
+        }
 
     // Decrease the reference count of ap.
     Py_DECREF(in_data);
@@ -57,6 +64,11 @@ static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
 static PyObject* dsp_goertzel_rad2(PyObject* self, PyObject* args)
 {
     return dsp_goertzel_template(self, args, 1);
+}
+
+static PyObject* dsp_goertzel_rad2_sse(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, 2);
 }
 
 static PyObject* dsp_goertzel_m(PyObject* self, PyObject* args)
@@ -127,6 +139,11 @@ static PyMethodDef methods[] = {
         "goertzel_rad2", dsp_goertzel_rad2,
         METH_VARARGS,
         "Goertzel radix-2 algorithm."
+    },
+    {
+        "goertzel_rad2_sse", dsp_goertzel_rad2_sse,
+        METH_VARARGS,
+        "Goertzel radix-2 algorithm using SSE instructions."
     },
     {
         "goertzel_m", dsp_goertzel_m,

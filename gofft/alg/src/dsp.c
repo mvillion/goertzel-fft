@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dsp.h"
+#include "immintrin.h"
 
 void goertzel(double *data, long data_len, double k, double *out)
 {
@@ -117,6 +118,74 @@ void goertzel_rad2(double *data, long data_len, double k, double *out)
 
     out[0] = i0+i1; // real
     out[1] = q0+q1; // imag
+}
+
+void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
+{
+    double omega = 2.0*M_PI*2*k/data_len;
+    double sine = sin(omega);
+    double cosine = cos(omega);
+    __m128d coeff = _mm_set1_pd(2.0*cosine);
+
+    __m128d q0 = _mm_setzero_pd(); // 1st radix-2 state variables
+    __m128d q1 = _mm_setzero_pd();
+    __m128d q2 = _mm_setzero_pd();
+    __m128d *data_pd = (__m128d *)data;
+
+    long int i;
+    for (i = 0; i < data_len/6*6; i += 6)
+    {
+        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), *(data_pd++));
+        q2 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q0), q1), *(data_pd++));
+        q1 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q2), q0), *(data_pd++));
+    }
+    for (; i < data_len/2*2; i += 2)
+    {
+        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), *(data_pd++));
+        q2 = q1;
+        q2 = q1;
+        q1 = q0;
+        q1 = q0;
+    }
+    for (; i < data_len; i++)
+    {
+        __m128d data_i = _mm_set1_pd(data[i]);
+        q0 = _mm_add_sd(_mm_sub_sd(_mm_mul_sd(coeff, q1), q2), data_i);
+        q2 = _mm_move_sd(q2, q1);
+        q1 = _mm_move_sd(q1, q0);
+    }
+
+    // back to non-SSE code
+    double q1a = q1[0];
+    double q1b = q1[1];
+    double q2a = q2[0];
+    double q2b = q2[1];
+    double ia = q1a*cosine-q2a;
+    double qa = q1a*sine;
+    double ib = q1b*cosine-q2b;
+    double qb = q1b*sine;
+
+    omega = -2.0*M_PI*k/data_len;
+    sine = sin(omega);
+    cosine = cos(omega);
+
+    if ((data_len & 1) == 0)
+    {
+        double i_t = ib;
+        // (cos+j*sin)*(ib+j*qb)
+        ib = i_t*cosine-sine*qb;
+        qb = i_t*sine+qb*cosine;
+    }
+    else
+    {
+        double i_t = ia;
+        // (cos+j*sin)*(ia+j*qa)
+        ia = i_t*cosine-sine*qa;
+        qa = i_t*sine+qa*cosine;
+    }
+
+    out[0] = ia+ib; // real
+    out[1] = qa+qb; // imag
 }
 
 void goertzel_mag_m_dumb(

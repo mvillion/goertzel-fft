@@ -1,7 +1,8 @@
 #include "include.h"
 #include <math.h>
 
-static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
+static PyObject* dsp_goertzel_template(
+    PyObject* self, PyObject* args, int fun_index)
 {
     PyArrayObject *in_data;
     double k;
@@ -28,16 +29,34 @@ static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
     PyObject *output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX128);
     double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
 
-    for (npy_intp i_data = 0; i_data < n_data; i_data++)
-    {
-        goertzel(data, data_len, k, out_res);
-        data += data_len;
-        out_res += 2;
-    }
+    if (fun_index == 0)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            goertzel(data, data_len, k, out_res);
+            data += data_len;
+            out_res += 2;
+        }
+    else if (fun_index == 1)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            goertzel_rad2(data, data_len, k, out_res);
+            data += data_len;
+            out_res += 2;
+        }
 
     // Decrease the reference count of ap.
     Py_DECREF(in_data);
     return output;
+}
+
+static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, 0);
+}
+
+static PyObject* dsp_goertzel_rad2(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, 1);
 }
 
 static PyObject* dsp_goertzel_m(PyObject* self, PyObject* args)
@@ -105,6 +124,11 @@ static PyMethodDef methods[] = {
         "Goertzel algorithm." // doc string
     },
     {
+        "goertzel_rad2", dsp_goertzel_rad2,
+        METH_VARARGS,
+        "Goertzel radix-2 algorithm."
+    },
+    {
         "goertzel_m", dsp_goertzel_m,
         METH_VARARGS,
         "Goertzel algorithm for multiple target frequency."
@@ -135,9 +159,7 @@ PyMODINIT_FUNC PyInit_dsp_ext(void)
     import_array(); // Must be called for NumPy.
     PyObject *m;
     m = PyModule_Create(&moduledef);
-    if (!m) {
-        return NULL;
-    }
+    if (!m) return NULL;
     return m;
 }
 #else

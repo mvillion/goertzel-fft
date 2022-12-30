@@ -53,30 +53,19 @@ double goertzel_mag(
     return sqrt(real*real + imag*imag);
 }
 
-double goertzel_avx(double* data, long data_len, int fs, double ft,
-                int filter_size)
+void goertzel_avx(double *data, long data_len, double k, double *out)
 {
-    double k;		// Related to frequency bins
-    double omega;
-    double sine, cosine, coeff, sf, mag;
-    double q0, q1, q2, real, imag;
+    double omega = 2.0*M_PI*k/data_len;
+    double sine = sin(omega);
+    double cosine = cos(omega);
+    double coeff = 2.0*cosine;
+
+    double q0 = 0.0;
+    double q1 = 0.0;
+    double q2 = 0.0;
+
     long int i;
-    long int dlen;
-
-    k = floor(0.5 + ((double)(filter_size*ft) / (double)fs));
-
-    omega = 2.0*M_PI*k/(double)filter_size;
-    sine = sin(omega);
-    cosine = cos(omega);
-    coeff = 2.0*cosine;
-    sf = (double)data_len;		// scale factor: for normalization
-
-    q0 = 0.0;
-    q1 = 0.0;
-    q2 = 0.0;
-
-    dlen = data_len - data_len%3;
-    for (i = 0; i < dlen; i+=3)
+    for (i = 0; i < (data_len/3)*3; i+=3)
     {
         q0 = coeff*q1 - q2 + data[i];
         q2 = coeff*q0 - q1 + data[i+1];
@@ -89,11 +78,16 @@ double goertzel_avx(double* data, long data_len, int fs, double ft,
         q1 = q0;
     }
 
-    real = (q1 - q2*cosine)/sf;
-    imag = (q2*sine)/sf;
-    mag = sqrt(real*real + imag*imag);
+    // note: dm00446805-the-goertzel-algorithm-to-compute-individual-terms-of-the-discrete-fourier-transform-dft-stmicroelectronics-1.pdf
+    // suggests for non-integer k:
+//     w2 = 2*pi*k;
+//     cw2 = cos(w2);
+//     sw2 = sin(w2);
+//     I = It*cw2 + Q*sw2;
+//     Q = -It*sw2 + Q*cw2;
 
-    return mag;
+    out[0] = q1*cosine-q2; // real
+    out[1] = q1*sine; // imag
 }
 
 void goertzel_mag_m_dumb(

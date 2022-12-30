@@ -16,7 +16,7 @@ static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
     double *data = (double *)PyArray_DATA(in_data);
 
     // create output dimensions
-    // last axis is replaced by 2 for (x, y, mag)
+    // last axis is removed, replaced by complex data i&q
     npy_intp out_dim[NPY_MAXDIMS];
     int n_dim = PyArray_NDIM(in_data);
     memcpy(out_dim, PyArray_DIMS(in_data), n_dim*sizeof(npy_intp));
@@ -24,9 +24,8 @@ static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
     npy_intp n_data = 1;
     for (int k = 0; k < n_dim-1; k++)
         n_data *= out_dim[k];
-    out_dim[n_dim-1] = 2;
 
-    PyObject *output = PyArray_SimpleNew(n_dim, out_dim, NPY_DOUBLE);
+    PyObject *output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX128);
     double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
 
     for (npy_intp i_data = 0; i_data < n_data; i_data++)

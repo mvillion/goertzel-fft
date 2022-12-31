@@ -14,12 +14,15 @@ class BenchType(Enum):
     goertzel_rad2_py = 3
     goertzel_rad2 = 4
     goertzel_rad2_sse = 5
+    goertzel_rad4_py = 6
 
 
 def goertzel_rad2_py(data, k):
     # if data_len = 9, data_len0 = 5 and data_len1 = 4
-    # for first part (i), k = 10/9 and internally k = 10/9*(0:5)/5
-    # k = (0:10:2)/9
+    # for 1sr part, k = 10/9 and internally k = 10/9*(0:5)/5
+    # k = (0:10:2)/9 = [0, 2, 4, 6, 8]/9
+    # for 2nd part, k = 8/9 and internally k = 8/9*(0:4)/4
+    # k = (0:8:2)/9 = [1, 3, 5, 7]/9 (with an additional rotation)
     shape = data.shape
     data_len = shape[-1]
     data = data.reshape(-1, data_len)
@@ -32,8 +35,11 @@ def goertzel_rad2_py(data, k):
     iq1 = dsp_ext.goertzel(data1, 2*k*data_len1/data_len)
 
     if data_len % 2 == 0:
+        # this is obvious: for even lengths, odd values need an additional rot
         iq1 *= np.exp(-2j*k*np.pi/data_len)
     else:
+        # this is less obvious: for odd lengths
+        # both even and odd are probably already rotated...?
         iq0 *= np.exp(-2j*k*np.pi/data_len)
 
     # # useful for debug:
@@ -45,6 +51,35 @@ def goertzel_rad2_py(data, k):
     #     print("stop")
 
     return (iq0+iq1).reshape(shape[:-1])
+
+
+def goertzel_rad4_py(data, k):
+    shape = data.shape
+    data_len = shape[-1]
+    data = data.reshape(-1, data_len)
+
+    iq = [None]*4
+    for m in range(4):
+        data_m = data[:, m::4]
+        data_len_m = data_m.shape[-1]
+        iq[m] = dsp_ext.goertzel(data_m, 4*k*data_len_m/data_len)
+
+    if data_len % 4 == 0:
+        for m in range(1, 4):
+            iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
+    else:
+        pass
+
+    # useful for debug:
+    if k == 1:
+        x = np.arange(data_len)
+        F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
+        iq_debug = [None]*4
+        for m in range(4):
+            iq_debug[m] = (data[:, m::4] @ F[m::4, :])[:, k]
+        print("stop")
+
+    return np.sum(iq, axis=0).reshape(shape[:-1])
 
 
 def bench_goertzel(data_len, n_test=10000):
@@ -77,6 +112,7 @@ def bench_goertzel(data_len, n_test=10000):
         BenchType.goertzel_rad2_py: goertzel_rad2_py,
         BenchType.goertzel_rad2: dsp_ext.goertzel_rad2,
         BenchType.goertzel_rad2_sse: dsp_ext.goertzel_rad2_sse,
+        BenchType.goertzel_rad4_py: goertzel_rad4_py,
     }
     for etype, fun in bench2fun.items():
         out = np.empty_like(out_fft)
@@ -106,7 +142,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("dummy exit")
         sys.exit()
-    cost, _ = bench_goertzel(13, n_test=10)
+    cost, _ = bench_goertzel(16, n_test=10)
     print(", ".join(["%s %f" % (k.name, cost[k.value]) for k in BenchType]))
 
     len_range = np.concatenate((

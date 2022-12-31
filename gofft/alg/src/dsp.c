@@ -127,7 +127,7 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
     double cosine = cos(omega);
     __m128d coeff = _mm_set1_pd(2.0*cosine);
 
-    __m128d q0 = _mm_setzero_pd(); // 1st radix-2 state variables
+    __m128d q0 = _mm_setzero_pd(); // both radix-2 state variables
     __m128d q1 = _mm_setzero_pd();
     __m128d q2 = _mm_setzero_pd();
     __m128d *data_pd = (__m128d *)data;
@@ -156,6 +156,7 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
     }
 
     // back to non-SSE code
+    // @todo: finish the work with SSE instructions
     double q1a = q1[0];
     double q1b = q1[1];
     double q2a = q2[0];

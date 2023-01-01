@@ -183,7 +183,7 @@ if __name__ == '__main__':
         print("dummy exit")
         sys.exit()
 
-    len_range = np.arange(17, 18)
+    len_range = np.arange(25, 26)
     cost, error = bench_range(len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
-    cost, error = bench_range(len_range, n_test=100)
+    cost, error = bench_range(len_range, n_test=10)
 
     from matplotlib import pyplot as plt
     plt.figure(1)

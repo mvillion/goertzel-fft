@@ -2,7 +2,7 @@
 #include <math.h>
 
 static PyObject* dsp_goertzel_template(
-    PyObject* self, PyObject* args, int fun_index)
+    PyObject* self, PyObject* args, goertzel_fun *fun, goertzel_fun *fun_cx)
 {
     PyArrayObject *in_data;
     double k;
@@ -29,62 +29,17 @@ static PyObject* dsp_goertzel_template(
     PyObject *output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX128);
     double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
 
-    if (fun_index == 0)
-    {
-        if (PyArray_ISCOMPLEX(in_data))
-            for (npy_intp i_data = 0; i_data < n_data; i_data++)
-            {
-                goertzel_cx(data, data_len, k, out_res);
-                data += data_len*2;
-                out_res += 2;
-            }
-        else
-            for (npy_intp i_data = 0; i_data < n_data; i_data++)
-            {
-                goertzel(data, data_len, k, out_res);
-                data += data_len;
-                out_res += 2;
-            }
-    }
-    else if (fun_index == 1)
+    if (PyArray_ISCOMPLEX(in_data) && fun_cx != NULL)
         for (npy_intp i_data = 0; i_data < n_data; i_data++)
         {
-            goertzel_rad2(data, data_len, k, out_res);
-            data += data_len;
+            fun_cx(data, data_len, k, out_res);
+            data += data_len*2;
             out_res += 2;
         }
-    else if (fun_index == 2)
+    else if (!PyArray_ISCOMPLEX(in_data) && fun != NULL)
         for (npy_intp i_data = 0; i_data < n_data; i_data++)
         {
-            goertzel_rad2_sse(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
-    else if (fun_index == 3)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            goertzel_rad4(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
-    else if (fun_index == 4)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            goertzel_rad4_avx(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
-    else if (fun_index == 5)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            goertzel_rad8_avx(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
-    else if (fun_index == 6)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            goertzel_rad12_avx(data, data_len, k, out_res);
+            fun(data, data_len, k, out_res);
             data += data_len;
             out_res += 2;
         }
@@ -96,37 +51,37 @@ static PyObject* dsp_goertzel_template(
 
 static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 0);
+    return dsp_goertzel_template(self, args, &goertzel, &goertzel_cx);
 }
 
 static PyObject* dsp_goertzel_rad2(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 1);
+    return dsp_goertzel_template(self, args, &goertzel_rad2, NULL);
 }
 
 static PyObject* dsp_goertzel_rad2_sse(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 2);
+    return dsp_goertzel_template(self, args, &goertzel_rad2_sse, NULL);
 }
 
 static PyObject* dsp_goertzel_rad4(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 3);
+    return dsp_goertzel_template(self, args, &goertzel_rad4, NULL);
 }
 
 static PyObject* dsp_goertzel_rad4_avx(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 4);
+    return dsp_goertzel_template(self, args, &goertzel_rad4_avx, NULL);
 }
 
 static PyObject* dsp_goertzel_rad8_avx(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 5);
+    return dsp_goertzel_template(self, args, &goertzel_rad8_avx, NULL);
 }
 
 static PyObject* dsp_goertzel_rad12_avx(PyObject* self, PyObject* args)
 {
-    return dsp_goertzel_template(self, args, 6);
+    return dsp_goertzel_template(self, args, &goertzel_rad12_avx, NULL);
 }
 
 static PyObject* dsp_goertzel_m(PyObject* self, PyObject* args)

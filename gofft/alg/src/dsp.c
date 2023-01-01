@@ -309,61 +309,11 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
     out[1] = i_t*sw+out[1]*cw;
 }
 
-void goertzel_rad4_avx(double *data, long data_len, double k, double *out)
-{
-    double omega = 2.0*M_PI*4*k/data_len;
-    double sw = sin(omega);
-    double cw = cos(omega);
-    __m256d coeff = _mm256_set1_pd(2.0*cw);
-
-    __m256d q0 = _mm256_setzero_pd(); // quad radix-4 state variables
-    __m256d q1 = _mm256_setzero_pd();
-    __m256d q2 = _mm256_setzero_pd();
-    __m256d *data_pd = (__m256d *)data;
-
-    long int i;
-    for (i = 0; i < data_len/12*12; i += 12)
-    {
-        q0 = _mm256_add_pd(
-            _mm256_sub_pd(_mm256_mul_pd(coeff, q1), q2), *(data_pd++));
-        q2 = _mm256_add_pd(
-            _mm256_sub_pd(_mm256_mul_pd(coeff, q0), q1), *(data_pd++));
-        q1 = _mm256_add_pd(
-            _mm256_sub_pd(_mm256_mul_pd(coeff, q2), q0), *(data_pd++));
-    }
-    for (; i < data_len; i += 4)
-    {
-        // zero-pad values in range data_len/4*4:data_len
-        __m256d data_i = _mm256_setzero_pd();
-        for (long int j = 0; j < MIN(4, data_len-i); j++)
-            data_i[j] = data[i+j];
-        q0 = _mm256_add_pd(
-            _mm256_sub_pd(_mm256_mul_pd(coeff, q1), q2), data_i);
-        q2 = q1;
-        q1 = q0;
-    }
-    double iq[8];
-    iq[0] = q1[0]*cw-q2[0];
-    iq[1] = q1[0]*sw;
-    iq[2] = q1[1]*cw-q2[1];
-    iq[3] = q1[1]*sw;
-    iq[4] = q1[2]*cw-q2[2];
-    iq[5] = q1[2]*sw;
-    iq[6] = q1[3]*cw-q2[3];
-    iq[7] = q1[3]*sw;
-
-    goertzel_cx(iq, 4, k*4/data_len, out);
-
-    long int n_pad = i-data_len;
-    omega = -2.0*M_PI*(4+n_pad)*k/data_len;
-    sw = sin(omega);
-    cw = cos(omega);
-
-    double i_t = out[0];
-    // (cw+j*sw)*(i1+j*q1)
-    out[0] = i_t*cw-out[1]*sw;
-    out[1] = i_t*sw+out[1]*cw;
-}
+#define RADIX 4
+#define GOERTZEL_AVX goertzel_rad4_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
 
 #define RADIX 8
 #define GOERTZEL_AVX goertzel_rad8_avx

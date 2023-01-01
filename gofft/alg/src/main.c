@@ -2,7 +2,7 @@
 #include <math.h>
 
 static PyObject* dsp_goertzel_template(
-    PyObject* self, PyObject* args, goertzel_fun *fun, goertzel_fun *fun_cx)
+    PyObject* self, PyObject* args, goertzel_fun_t *fun, goertzel_fun_t *fun_cx)
 {
     PyArrayObject *in_data;
     double k;
@@ -50,7 +50,7 @@ static PyObject* dsp_goertzel_template(
 }
 
 static PyObject* dsp_goertzel_dft_template(
-    PyObject* self, PyObject* args, goertzel_fun *fun, goertzel_fun *fun_cx)
+    PyObject* self, PyObject* args, goertzel_fun_t *fun, goertzel_fun_t *fun_cx)
 {
     PyArrayObject *in_data;
     double k;
@@ -136,6 +136,16 @@ static PyObject* dsp_goertzel_dft(PyObject* self, PyObject* args)
         self, args, &goertzel_dft, &goertzel_dft_cx);
 }
 
+static PyObject* dsp_goertzel_dft_rad2(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_dft_template(self, args, &goertzel_dft_rad2, NULL);
+}
+
+static PyObject* dsp_goertzel_dft_rad2_sse(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_dft_template(self, args, &goertzel_dft_rad2_sse, NULL);
+}
+
 /* Set up the methods table */
 static PyMethodDef methods[] = {
     {
@@ -179,9 +189,19 @@ static PyMethodDef methods[] = {
         "Goertzel radix-12 algorithm using AVX instructions."
     },
     {
-        "goertzel_dft", dsp_goertzel_dft, // Python name, C name
-        METH_VARARGS, // input parameters
-        "Goertzel algorithm to compute dft." // doc string
+        "goertzel_dft", dsp_goertzel_dft,
+        METH_VARARGS,
+        "Goertzel algorithm to compute dft."
+    },
+    {
+        "goertzel_dft_rad2", dsp_goertzel_dft_rad2,
+        METH_VARARGS,
+        "Goertzel radix-2 algorithm to compute dft."
+    },
+    {
+        "goertzel_dft_rad2_sse", dsp_goertzel_dft_rad2_sse,
+        METH_VARARGS,
+        "Goertzel radix-2 algorithm using SSE instructions to compute dft."
     },
     {NULL, NULL, 0, NULL} // sentinel
 };

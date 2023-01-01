@@ -425,3 +425,21 @@ void goertzel_dft_cx(double *data, long data_len, double k, double *out)
         out += 2;
     }
 }
+
+void goertzel_dft_rad2(double *data, long data_len, double k, double *out)
+{
+    for (long i = 0; i < data_len; i++)
+    {
+        goertzel_rad2(data, data_len, (double)i, out);
+        out += 2;
+    }
+}
+
+void goertzel_dft_rad2_sse(double *data, long data_len, double k, double *out)
+{
+    for (long i = 0; i < data_len; i++)
+    {
+        goertzel_rad2_sse(data, data_len, (double)i, out);
+        out += 2;
+    }
+}

@@ -16,6 +16,9 @@ goertzel_fun goertzel_rad4_avx;
 goertzel_fun goertzel_rad8_avx;
 goertzel_fun goertzel_rad12_avx;
 
+goertzel_fun goertzel_dft;
+goertzel_fun goertzel_dft_cx;
+
 // void goertzel(double *data, long data_len, double k, double *out);
 // void goertzel_cx(double *data, long data_len, double k, double *out);
 // void goertzel_rad2(double *data, long data_len, double k, double *out);
@@ -24,8 +27,3 @@ goertzel_fun goertzel_rad12_avx;
 // void goertzel_rad4_avx(double *data, long data_len, double k, double *out);
 // void goertzel_rad8_avx(double *data, long data_len, double k, double *out);
 // void goertzel_rad12_avx(double *data, long data_len, double k, double *out);
-
-double goertzel_mag(
-    double *data, long data_len, int fs, double ft, int filter_size);
-void goertzel_m(double* data, long int data_len, int fs, double* ft, int ft_num, int filter_size, double* mag);
-double goertzel_rng(double* data, long data_len, int fs, double ft, int filter_size, double rng);

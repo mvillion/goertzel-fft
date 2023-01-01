@@ -19,6 +19,7 @@ bench_list = [
     "goertzel_rad8_py",
     "goertzel_rad8_avx",
     "goertzel_rad12_avx",
+    "goertzel_dft",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -137,6 +138,19 @@ def bench_goertzel(data_len, n_test=10000):
     cost[BenchType.fft.value] = time()-t0
     error[BenchType.dft.value] = (out-out_fft).std(axis=-1).max()
     error[BenchType.fft.value] = np.nan
+
+    bench2fun = {
+        "goertzel_dft": dsp_ext.goertzel_dft,
+    }
+    for type_str, fun in bench2fun.items():
+        try:
+            etype = BenchType[type_str]
+        except KeyError:
+            continue
+        t0 = time()
+        out = fun(in_data, np.nan)
+        cost[etype.value] = time()-t0
+        error[etype.value] = (out-out_fft).std(axis=-1).max()
 
     bench2fun = {
         "goertzel": dsp_ext.goertzel,

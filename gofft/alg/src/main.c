@@ -49,6 +49,52 @@ static PyObject* dsp_goertzel_template(
     return output;
 }
 
+static PyObject* dsp_goertzel_dft_template(
+    PyObject* self, PyObject* args, goertzel_fun *fun, goertzel_fun *fun_cx)
+{
+    PyArrayObject *in_data;
+    double k;
+
+    if (!PyArg_ParseTuple(args, "O!d", &PyArray_Type, &in_data, &k))
+        return NULL;
+    if (in_data == NULL) return NULL;
+
+    // Ensure the input array is contiguous.
+    // PyArray_GETCONTIGUOUS will increase the reference count.
+    in_data = PyArray_GETCONTIGUOUS(in_data);
+    double *data = (double *)PyArray_DATA(in_data);
+
+    // create output dimensions
+    int n_dim = PyArray_NDIM(in_data);
+    npy_intp *out_dim = PyArray_DIMS(in_data);
+    long int data_len = out_dim[n_dim-1];
+    npy_intp n_data = 1;
+    for (int k = 0; k < n_dim-1; k++)
+        n_data *= out_dim[k];
+
+    PyObject *output = PyArray_SimpleNew(n_dim, out_dim, NPY_COMPLEX128);
+    double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
+
+    if (PyArray_ISCOMPLEX(in_data) && fun_cx != NULL)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            fun_cx(data, data_len, k, out_res);
+            data += data_len*2;
+            out_res += data_len*2;
+        }
+    else if (!PyArray_ISCOMPLEX(in_data) && fun != NULL)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            fun(data, data_len, k, out_res);
+            data += data_len;
+            out_res += data_len*2;
+        }
+
+    // Decrease the reference count of ap.
+    Py_DECREF(in_data);
+    return output;
+}
+
 static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
 {
     return dsp_goertzel_template(self, args, &goertzel, &goertzel_cx);
@@ -84,61 +130,10 @@ static PyObject* dsp_goertzel_rad12_avx(PyObject* self, PyObject* args)
     return dsp_goertzel_template(self, args, &goertzel_rad12_avx, NULL);
 }
 
-static PyObject* dsp_goertzel_m(PyObject* self, PyObject* args)
+static PyObject* dsp_goertzel_dft(PyObject* self, PyObject* args)
 {
-    PyArrayObject *in_data;
-    PyArrayObject *in_ft;
-    int filter_size;
-    int fs;
-
-    if (!PyArg_ParseTuple(args, "O!iO!i",
-        &PyArray_Type, &in_data, &fs, &PyArray_Type, &in_ft, &filter_size))
-        return NULL;
-    if (in_data == NULL) return NULL;
-    if (in_ft == NULL) return NULL;
-
-    in_data = PyArray_GETCONTIGUOUS(in_data);
-
-    double *data = (double *)PyArray_DATA(in_data);
-    long int data_len = (long int)PyArray_DIM(in_data, 0);
-    double *ft = (double *)PyArray_DATA(in_ft);
-    int ft_num = (int)PyArray_DIM(in_ft, 0);
-
-    PyObject *output = PyArray_SimpleNew(1, PyArray_DIMS(in_ft), NPY_DOUBLE);
-    double *mag = (double *)PyArray_DATA((PyArrayObject *)output);
-
-    goertzel_m(data, data_len, fs, ft, ft_num, filter_size, mag);
-
-    Py_DECREF(in_data);
-    return output;
-}
-
-static PyObject* dsp_goertzel_rng(PyObject* self, PyObject* args)
-{
-    PyArrayObject *ap;
-    int filter_size, fs;
-    double ft;
-    double rng;
-    long data_len;
-    double *data;
-
-    double magnitude;
-
-    if (!PyArg_ParseTuple(args, "O!idid",
-        &PyArray_Type, &ap, &fs, &ft, &filter_size, &rng)) {
-        return NULL;
-    }
-    if (ap == NULL) return NULL;
-
-    ap = PyArray_GETCONTIGUOUS(ap);
-
-    data = (double *)PyArray_DATA(ap);
-    data_len = (long)PyArray_DIM(ap, 0);
-
-    magnitude = goertzel_rng(data, data_len, fs, ft, filter_size, rng);
-
-    Py_DECREF(ap);
-    return Py_BuildValue("d", magnitude);
+    return dsp_goertzel_dft_template(
+        self, args, &goertzel_dft, &goertzel_dft_cx);
 }
 
 /* Set up the methods table */
@@ -184,14 +179,9 @@ static PyMethodDef methods[] = {
         "Goertzel radix-12 algorithm using AVX instructions."
     },
     {
-        "goertzel_m", dsp_goertzel_m,
-        METH_VARARGS,
-        "Goertzel algorithm for multiple target frequency."
-    },
-    {
-        "goertzel_rng", dsp_goertzel_rng,
-        METH_VARARGS,
-        "Goertzel algorithm for specific frequency range."
+        "goertzel_dft", dsp_goertzel_dft, // Python name, C name
+        METH_VARARGS, // input parameters
+        "Goertzel algorithm to compute dft." // doc string
     },
     {NULL, NULL, 0, NULL} // sentinel
 };

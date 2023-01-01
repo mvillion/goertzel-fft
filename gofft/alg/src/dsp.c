@@ -365,6 +365,18 @@ void goertzel_rad4_avx(double *data, long data_len, double k, double *out)
     out[1] = i_t*sw+out[1]*cw;
 }
 
+#define RADIX 8
+#define GOERTZEL_AVX goertzel_rad8_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 12
+#define GOERTZEL_AVX goertzel_rad12_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
 void goertzel_rad4x2_avx(
     double *data, long data_len, double k[2], double *out[2])
 {

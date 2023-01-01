@@ -74,6 +74,20 @@ static PyObject* dsp_goertzel_template(
             data += data_len;
             out_res += 2;
         }
+    else if (fun_index == 5)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            goertzel_rad8_avx(data, data_len, k, out_res);
+            data += data_len;
+            out_res += 2;
+        }
+    else if (fun_index == 6)
+        for (npy_intp i_data = 0; i_data < n_data; i_data++)
+        {
+            goertzel_rad12_avx(data, data_len, k, out_res);
+            data += data_len;
+            out_res += 2;
+        }
 
     // Decrease the reference count of ap.
     Py_DECREF(in_data);
@@ -103,6 +117,16 @@ static PyObject* dsp_goertzel_rad4(PyObject* self, PyObject* args)
 static PyObject* dsp_goertzel_rad4_avx(PyObject* self, PyObject* args)
 {
     return dsp_goertzel_template(self, args, 4);
+}
+
+static PyObject* dsp_goertzel_rad8_avx(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, 5);
+}
+
+static PyObject* dsp_goertzel_rad12_avx(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, 6);
 }
 
 static PyObject* dsp_goertzel_m(PyObject* self, PyObject* args)
@@ -193,6 +217,16 @@ static PyMethodDef methods[] = {
         "goertzel_rad4_avx", dsp_goertzel_rad4_avx,
         METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions."
+    },
+    {
+        "goertzel_rad8_avx", dsp_goertzel_rad8_avx,
+        METH_VARARGS,
+        "Goertzel radix-8 algorithm using AVX instructions."
+    },
+    {
+        "goertzel_rad12_avx", dsp_goertzel_rad12_avx,
+        METH_VARARGS,
+        "Goertzel radix-12 algorithm using AVX instructions."
     },
     {
         "goertzel_m", dsp_goertzel_m,

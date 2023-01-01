@@ -17,6 +17,8 @@ bench_list = [
     "goertzel_rad4",
     "goertzel_rad4_avx",
     "goertzel_rad8_py",
+    "goertzel_rad8_avx",
+    "goertzel_rad12_avx",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -145,6 +147,8 @@ def bench_goertzel(data_len, n_test=10000):
         "goertzel_rad4": dsp_ext.goertzel_rad4,
         "goertzel_rad4_avx": dsp_ext.goertzel_rad4_avx,
         "goertzel_rad8_py": goertzel_rad8_py,
+        "goertzel_rad8_avx": dsp_ext.goertzel_rad8_avx,
+        "goertzel_rad12_avx": dsp_ext.goertzel_rad12_avx,
     }
     for type_str, fun in bench2fun.items():
         try:

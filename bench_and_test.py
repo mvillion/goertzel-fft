@@ -69,34 +69,41 @@ def goertzel_rad4_py(data, k):
         data_m = data[:, m::4]
         iq[m] = dsp_ext.goertzel(data_m, k*data_len4/data_len)
 
-    # # perform complex goertzel with 2 real goertzel
-    # data_r = np.array([m.real for m in iq]).T
-    # data_i = np.array([m.imag for m in iq]).T
-    # iq_r = dsp_ext.goertzel(data_r, k*4/data_len)
-    # iq_i = dsp_ext.goertzel(data_i, k*4/data_len)
-    # iq = iq_r+1j*iq_i
+    # perform complex goertzel with 2 real goertzel
+    data_r = np.array([m.real for m in iq]).T
+    data_i = np.array([m.imag for m in iq]).T
+    iq_r = dsp_ext.goertzel(data_r, k*4/data_len)
+    iq_i = dsp_ext.goertzel(data_i, k*4/data_len)
+    iq_out = iq_r+1j*iq_i
+    iq_out *= np.exp(-2j*4*k*np.pi/data_len)
 
-    for m in range(1, 4):
-        iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
+    # for m in range(1, 4):
+    #     iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
 
-    # useful for debug:
-    if k == 1:
-        x = np.arange(data_len)
-        F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
-        iq_debug = [None]*4
-        for m in range(4):
-            iq_debug[m] = (data[:, m:data_len:4] @ F[m:data_len:4, :])[:, k]
-            ang = np.angle((iq[m]/iq_debug[m]).mean())
-            num = data_len*ang/(2*np.pi)
-            print("k: %f, m: %d, %f/%d" % (k, m, num, data_len))
-        print("stop")
+    # # # useful for debug:
+    # # if k == 1:
+    # #     x = np.arange(data_len)
+    # #     F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
+    # #     iq_debug = [None]*4
+    # #     for m in range(4):
+    # #         iq_debug[m] = (data[:, m:data_len:4] @ F[m:data_len:4, :])[:, k]
+    # #         ang = np.angle((iq[m]/iq_debug[m]).mean())
+    # #         num = data_len*ang/(2*np.pi)
+    # #         print("k: %f, m: %d, %f/%d" % (k, m, num, data_len))
+    # #     print("stop")
 
-    iq = np.sum(iq, axis=0)
+    # iq = np.sum(iq, axis=0)
+
+    # # ang = np.angle((iq_out/iq).mean())
+    # # num = data_len*ang/(2*np.pi)
+    # # print("k: %f, %f/%d" % (k, num, data_len))
+    # # if np.std(iq-iq2) > 1e-8:
+    # #     print("oops")
 
     if 0 < n_pad:
-        iq *= np.exp(-2j*k*n_pad*np.pi/data_len)
+        iq_out *= np.exp(-2j*k*n_pad*np.pi/data_len)
 
-    return iq.reshape(shape[:-1])
+    return iq_out.reshape(shape[:-1])
 
 
 def bench_goertzel(data_len, n_test=10000):
@@ -159,8 +166,12 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("dummy exit")
         sys.exit()
-    cost, _ = bench_goertzel(18, n_test=10)
-    print(", ".join(["%s %f" % (k.name, cost[k.value]) for k in BenchType]))
+
+    len_range = np.arange(16, 20)
+    cost, error = bench_range(len_range, n_test=10)
+    for m, data_len in enumerate(len_range):
+        cost_str = ["%s %f" % (k.name, cost[k.value, m]) for k in BenchType]
+        print(", ".join(cost_str))
 
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),

@@ -14,6 +14,7 @@ bench_list = [
     "goertzel_rad2",
     "goertzel_rad2_sse",
     "goertzel_rad4_py",
+    "goertzel_rad4",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -134,6 +135,7 @@ def bench_goertzel(data_len, n_test=10000):
         BenchType.goertzel_rad2: dsp_ext.goertzel_rad2,
         BenchType.goertzel_rad2_sse: dsp_ext.goertzel_rad2_sse,
         BenchType.goertzel_rad4_py: goertzel_rad4_py,
+        BenchType.goertzel_rad4: dsp_ext.goertzel_rad4,
     }
     for etype, fun in bench2fun.items():
         out = np.empty_like(out_fft)
@@ -164,11 +166,12 @@ if __name__ == '__main__':
         print("dummy exit")
         sys.exit()
 
-    len_range = np.arange(16, 20)
-    cost, error = bench_range(len_range, n_test=10)
+    len_range = np.arange(17, 18)
+    cost, error = bench_range(len_range, n_test=2)
     for m, data_len in enumerate(len_range):
-        cost_str = ["%s %f" % (k.name, cost[k.value, m]) for k in BenchType]
+        cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
         print(", ".join(cost_str))
+    # sys.exit()
 
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),

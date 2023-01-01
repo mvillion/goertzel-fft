@@ -10,12 +10,13 @@ bench_list = [
     "dft",
     "fft",
     "goertzel",
-    "goertzel_rad2_py",
+    # "goertzel_rad2_py",
     "goertzel_rad2",
     "goertzel_rad2_sse",
-    "goertzel_rad4_py",
+    # "goertzel_rad4_py",
     "goertzel_rad4",
     "goertzel_rad4_avx",
+    "goertzel_rad8_py",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -56,36 +57,37 @@ def goertzel_rad2_py(data, k):
     return (iq0+iq1).reshape(shape[:-1])
 
 
-def goertzel_rad4_py(data, k):
+def goertzel_radix_py(data, k, radix=4):
     shape = data.shape
     data_len = shape[-1]
     data = data.reshape(-1, data_len)
 
-    data_len4 = (data_len+3)//4*4
-    n_pad = data_len4-data_len
+    data_len_r = (data_len+radix-1)//radix*radix
+    n_pad = data_len_r-data_len
     if 0 < n_pad:
         data = np.column_stack(
             (data, np.zeros_like(data, shape=(data.shape[0], n_pad))))
 
-    iq = [None]*4
-    for m in range(4):
-        data_m = data[:, m::4]
-        iq[m] = dsp_ext.goertzel(data_m, k*data_len4/data_len)
+    iq = [None]*radix
+    for m in range(radix):
+        data_m = data[:, m::radix]
+        iq[m] = dsp_ext.goertzel(data_m, k*data_len_r/data_len)
 
     # perform complex goertzel
-    iq_out = dsp_ext.goertzel(np.array(iq).T, k*4/data_len)
-    iq_out *= np.exp(-2j*4*k*np.pi/data_len)
+    iq_out = dsp_ext.goertzel(np.array(iq).T, k*radix/data_len)
+    iq_out *= np.exp(-2j*radix*k*np.pi/data_len)
 
-    # for m in range(1, 4):
+    # for m in range(1, radix):
     #     iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
 
     # # # useful for debug:
     # # if k == 1:
     # #     x = np.arange(data_len)
     # #     F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
-    # #     iq_debug = [None]*4
-    # #     for m in range(4):
-    # #         iq_debug[m] = (data[:, m:data_len:4] @ F[m:data_len:4, :])[:, k]
+    # #     iq_debug = [None]*radix
+    # #     for m in range(radix):
+    # #         F_r = F[m:data_len:radix, :]
+    # #         iq_debug[m] = (data[:, m:data_len:radix] @ F_r)[:, k]
     # #         ang = np.angle((iq[m]/iq_debug[m]).mean())
     # #         num = data_len*ang/(2*np.pi)
     # #         print("k: %f, m: %d, %f/%d" % (k, m, num, data_len))
@@ -103,6 +105,10 @@ def goertzel_rad4_py(data, k):
         iq_out *= np.exp(-2j*k*n_pad*np.pi/data_len)
 
     return iq_out.reshape(shape[:-1])
+
+
+def goertzel_rad8_py(data, k):
+    return goertzel_radix_py(data, k, radix=8)
 
 
 def bench_goertzel(data_len, n_test=10000):
@@ -131,15 +137,20 @@ def bench_goertzel(data_len, n_test=10000):
     error[BenchType.fft.value] = np.nan
 
     bench2fun = {
-        BenchType.goertzel: dsp_ext.goertzel,
-        BenchType.goertzel_rad2_py: goertzel_rad2_py,
-        BenchType.goertzel_rad2: dsp_ext.goertzel_rad2,
-        BenchType.goertzel_rad2_sse: dsp_ext.goertzel_rad2_sse,
-        BenchType.goertzel_rad4_py: goertzel_rad4_py,
-        BenchType.goertzel_rad4: dsp_ext.goertzel_rad4,
-        BenchType.goertzel_rad4_avx: dsp_ext.goertzel_rad4_avx,
+        "goertzel": dsp_ext.goertzel,
+        "goertzel_rad2_py": goertzel_rad2_py,
+        "goertzel_rad2": dsp_ext.goertzel_rad2,
+        "goertzel_rad2_sse": dsp_ext.goertzel_rad2_sse,
+        "goertzel_rad4_py": goertzel_radix_py,
+        "goertzel_rad4": dsp_ext.goertzel_rad4,
+        "goertzel_rad4_avx": dsp_ext.goertzel_rad4_avx,
+        "goertzel_rad8_py": goertzel_rad8_py,
     }
-    for etype, fun in bench2fun.items():
+    for type_str, fun in bench2fun.items():
+        try:
+            etype = BenchType[type_str]
+        except KeyError:
+            continue
         out = np.empty_like(out_fft)
         cost_goertzel = 0
         for k in range(data_len):
@@ -178,7 +189,7 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
-    cost, error = bench_range(len_range, n_test=10)
+    cost, error = bench_range(len_range, n_test=100)
 
     from matplotlib import pyplot as plt
     plt.figure(1)

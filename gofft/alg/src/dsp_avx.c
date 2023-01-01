@@ -29,13 +29,13 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
             q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
                 coeff, q2[m]), q0[m]), *(data_pd++));
     }
-    for (; i < data_len; i += 8)
+    for (; i < data_len; i += RADIX)
         for (int m = 0; m < RADIX/4; m++)
         {
             // zero-pad values in range data_len/4*4:data_len
             __m256d data_i = _mm256_setzero_pd();
             for (long int j = 0; j < MAX(0, MIN(4, data_len-i-4*m)); j++)
-                data_i[j] = data[i+4+j];
+                data_i[j] = data[i+4*m+j];
             q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
                 coeff, q1[m]), q2[m]), data_i);
             q2[m] = q1[m];

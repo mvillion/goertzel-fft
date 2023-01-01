@@ -58,17 +58,26 @@ def goertzel_rad4_py(data, k):
     data_len = shape[-1]
     data = data.reshape(-1, data_len)
 
+    data_len4 = (data_len+3)//4*4
+    n_pad = data_len4-data_len
+    if 0 < n_pad:
+        data = np.column_stack(
+            (data, np.zeros_like(data, shape=(data.shape[0], n_pad))))
+
     iq = [None]*4
     for m in range(4):
         data_m = data[:, m::4]
-        data_len_m = data_m.shape[-1]
-        iq[m] = dsp_ext.goertzel(data_m, 4*k*data_len_m/data_len)
+        iq[m] = dsp_ext.goertzel(data_m, k*data_len4/data_len)
 
-    if data_len % 4 == 0:
-        for m in range(1, 4):
-            iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
-    else:
-        pass
+    # # perform complex goertzel with 2 real goertzel
+    # data_r = np.array([m.real for m in iq]).T
+    # data_i = np.array([m.imag for m in iq]).T
+    # iq_r = dsp_ext.goertzel(data_r, k*4/data_len)
+    # iq_i = dsp_ext.goertzel(data_i, k*4/data_len)
+    # iq = iq_r+1j*iq_i
+
+    for m in range(1, 4):
+        iq[m] *= np.exp(-2j*k*m*np.pi/data_len)
 
     # useful for debug:
     if k == 1:
@@ -76,10 +85,18 @@ def goertzel_rad4_py(data, k):
         F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
         iq_debug = [None]*4
         for m in range(4):
-            iq_debug[m] = (data[:, m::4] @ F[m::4, :])[:, k]
+            iq_debug[m] = (data[:, m:data_len:4] @ F[m:data_len:4, :])[:, k]
+            ang = np.angle((iq[m]/iq_debug[m]).mean())
+            num = data_len*ang/(2*np.pi)
+            print("k: %f, m: %d, %f/%d" % (k, m, num, data_len))
         print("stop")
 
-    return np.sum(iq, axis=0).reshape(shape[:-1])
+    iq = np.sum(iq, axis=0)
+
+    if 0 < n_pad:
+        iq *= np.exp(-2j*k*n_pad*np.pi/data_len)
+
+    return iq.reshape(shape[:-1])
 
 
 def bench_goertzel(data_len, n_test=10000):
@@ -142,7 +159,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("dummy exit")
         sys.exit()
-    cost, _ = bench_goertzel(16, n_test=10)
+    cost, _ = bench_goertzel(18, n_test=10)
     print(", ".join(["%s %f" % (k.name, cost[k.value]) for k in BenchType]))
 
     len_range = np.concatenate((

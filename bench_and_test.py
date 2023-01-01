@@ -15,6 +15,7 @@ bench_list = [
     "goertzel_rad2_sse",
     "goertzel_rad4_py",
     "goertzel_rad4",
+    "goertzel_rad4_avx",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -136,6 +137,7 @@ def bench_goertzel(data_len, n_test=10000):
         BenchType.goertzel_rad2_sse: dsp_ext.goertzel_rad2_sse,
         BenchType.goertzel_rad4_py: goertzel_rad4_py,
         BenchType.goertzel_rad4: dsp_ext.goertzel_rad4,
+        BenchType.goertzel_rad4_avx: dsp_ext.goertzel_rad4_avx,
     }
     for etype, fun in bench2fun.items():
         out = np.empty_like(out_fft)

@@ -40,6 +40,46 @@ void goertzel(double *data, long data_len, double k, double *out)
     out[1] = q1*sine; // imag
 }
 
+void goertzel_cx(double *data, long data_len, double k, double *out)
+{
+    double omega = 2.0*M_PI*k/data_len;
+    double sine = sin(omega);
+    double cosine = cos(omega);
+    double coeff = 2.0*cosine;
+
+    double q0a = 0.0; // for real part
+    double q1a = 0.0;
+    double q2a = 0.0;
+    double q0b = 0.0; // for imaginary part
+    double q1b = 0.0;
+    double q2b = 0.0;
+
+    long int i;
+    for (i = 0; i < data_len/3*3; i += 3)
+    {
+        q0a = coeff*q1a - q2a + data[2*i+0];
+        q0b = coeff*q1b - q2b + data[2*i+1];
+        q2a = coeff*q0a - q1a + data[2*i+2];
+        q2b = coeff*q0b - q1b + data[2*i+3];
+        q1a = coeff*q2a - q0a + data[2*i+4];
+        q1b = coeff*q2b - q0b + data[2*i+5];
+    }
+    for (; i < data_len; i++)
+    {
+        q0a = coeff*q1a - q2a + data[2*i+0];
+        q0b = coeff*q1b - q2b + data[2*i+1];
+        q2a = q1a;
+        q2b = q1b;
+        q1a = q0a;
+        q1b = q0b;
+    }
+
+    out[0] = q1a*cosine-q2a; // real
+    out[1] = q1a*sine; // imag
+    out[0] -= q1b*sine; // real
+    out[1] += q1b*cosine-q2b; // imag
+}
+
 double goertzel_mag(
     double *data, long data_len, int fs, double ft, int filter_size)
 {

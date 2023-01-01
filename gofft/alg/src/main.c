@@ -30,12 +30,22 @@ static PyObject* dsp_goertzel_template(
     double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
 
     if (fun_index == 0)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            goertzel(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
+    {
+        if (PyArray_ISCOMPLEX(in_data))
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                goertzel_cx(data, data_len, k, out_res);
+                data += data_len*2;
+                out_res += 2;
+            }
+        else
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                goertzel(data, data_len, k, out_res);
+                data += data_len;
+                out_res += 2;
+            }
+    }
     else if (fun_index == 1)
         for (npy_intp i_data = 0; i_data < n_data; i_data++)
         {
@@ -134,6 +144,11 @@ static PyMethodDef methods[] = {
         "goertzel", dsp_goertzel, // Python name, C name
         METH_VARARGS, // input parameters
         "Goertzel algorithm." // doc string
+    },
+    {
+        "goertzel_cx", dsp_goertzel_rad2,
+        METH_VARARGS,
+        "Goertzel with complex input algorithm."
     },
     {
         "goertzel_rad2", dsp_goertzel_rad2,

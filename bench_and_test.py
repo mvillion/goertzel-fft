@@ -6,15 +6,16 @@ from enum import Enum
 from gofft_directory import dsp_ext
 from time import time
 
-
-class BenchType(Enum):
-    dft = 0
-    fft = 1
-    goertzel = 2
-    goertzel_rad2_py = 3
-    goertzel_rad2 = 4
-    goertzel_rad2_sse = 5
-    goertzel_rad4_py = 6
+bench_list = [
+    "dft",
+    "fft",
+    "goertzel",
+    "goertzel_rad2_py",
+    "goertzel_rad2",
+    "goertzel_rad2_sse",
+    "goertzel_rad4_py",
+]
+BenchType = Enum("BenchType", bench_list, start=0)
 
 
 def goertzel_rad2_py(data, k):
@@ -69,12 +70,8 @@ def goertzel_rad4_py(data, k):
         data_m = data[:, m::4]
         iq[m] = dsp_ext.goertzel(data_m, k*data_len4/data_len)
 
-    # perform complex goertzel with 2 real goertzel
-    data_r = np.array([m.real for m in iq]).T
-    data_i = np.array([m.imag for m in iq]).T
-    iq_r = dsp_ext.goertzel(data_r, k*4/data_len)
-    iq_i = dsp_ext.goertzel(data_i, k*4/data_len)
-    iq_out = iq_r+1j*iq_i
+    # perform complex goertzel
+    iq_out = dsp_ext.goertzel(np.array(iq).T, k*4/data_len)
     iq_out *= np.exp(-2j*4*k*np.pi/data_len)
 
     # for m in range(1, 4):

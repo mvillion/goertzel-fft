@@ -201,7 +201,7 @@ if __name__ == '__main__':
         print("dummy exit")
         sys.exit()
 
-    len_range = np.arange(25, 26)
+    len_range = np.arange(5, 6)
     cost, error = bench_range(len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]

@@ -410,9 +410,16 @@ void goertzel_rad4x2_avx(
 
 void goertzel_dft(double *data, long data_len, double k, double *out)
 {
-    for (long i = 0; i < data_len; i++)
+    double *out_end = out+2*data_len;
+
+    goertzel(data, data_len, (double)0, out);
+    out += 2;
+    for (long i = 1; i < (data_len+1)/2; i++)
     {
+        out_end -= 2;
         goertzel(data, data_len, (double)i, out);
+        out_end[0] = out[0];
+        out_end[1] = -out[1];
         out += 2;
     }
 }

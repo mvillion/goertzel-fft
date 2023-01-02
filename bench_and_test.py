@@ -10,15 +10,15 @@ bench_list = [
     "dft",
     "fft",
     "goertzel",
-    # # "goertzel_rad2_py",
-    # "goertzel_rad2",
-    # "goertzel_rad2_sse",
-    # # "goertzel_rad4_py",
-    # "goertzel_rad4",
-    # "goertzel_rad4_avx",
-    # "goertzel_rad8_py",
-    # "goertzel_rad8_avx",
-    # "goertzel_rad12_avx",
+    # "goertzel_rad2_py",
+    "goertzel_rad2",
+    "goertzel_rad2_sse",
+    # "goertzel_rad4_py",
+    "goertzel_rad4",
+    "goertzel_rad4_avx",
+    "goertzel_rad8_py",
+    "goertzel_rad8_avx",
+    "goertzel_rad12_avx",
     "goertzel_dft",
     "goertzel_dft_rad2",
     "goertzel_dft_rad2_sse",
@@ -201,7 +201,7 @@ if __name__ == '__main__':
         print("dummy exit")
         sys.exit()
 
-    len_range = np.arange(5, 6)
+    len_range = np.arange(16, 17)
     cost, error = bench_range(len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
@@ -224,6 +224,7 @@ if __name__ == '__main__':
     plt.figure(2)
     for k in BenchType:
         if np.isnan(error[k.value, :]).all():
+            plt.plot(np.arange(1), np.arange(1), label="%s vs fft" % k.name)
             continue
         plt.plot(len_range, error[k.value, :], label="%s vs fft" % k.name)
     plt.legend()

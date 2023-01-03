@@ -14,6 +14,8 @@ How much master Goertzel is? How can it be made faster?
 
 ![alt text](https://imgur.com/a/p9J1xNW)
 
+https://imgur.com/a/p9J1xNW
+
 Second problem:
 If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.

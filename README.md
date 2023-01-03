@@ -12,6 +12,8 @@ As Goertzel algorithm computes a single output frequency, it is faster than FFT.
 First problem:
 How much master Goertzel is? How can it be made faster?
 
+![alt text](https://imgur.com/a/p9J1xNW)
+
 Second problem:
 If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.
@@ -81,7 +83,7 @@ This problem does not fully make sense.
 
   ![Fig 01. Result of test (error)][dtype_float64_error]
 
-  ![Fig 02. Result of benchmark (csot)][dtype_float64_cost]
+  ![Fig 02. Result of benchmark (cost)][dtype_float64_cost]
 
 
 ## Reference

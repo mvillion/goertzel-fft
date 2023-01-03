@@ -12,6 +12,16 @@ As Goertzel algorithm computes a single output frequency, it is faster than FFT.
 First problem:
 How much master Goertzel is? How can it be made faster?
 
+  ![Fig 01. Result of benchmark (cost)][dtype_float64_cost]
+
+Higher order radix are faster up to 8..
+SSE and AVX are not necessarily faster but AVX allows using less registers,
+which in the end enables faster versions.
+
+  ![Fig 01. Result of test (error)][dtype_float64_error]
+
+Higher order radix have better numerical precision.
+
 Second problem:
 If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.
@@ -75,20 +85,11 @@ This problem does not fully make sense.
   $ python3 bench_and_test.py
   ```
 
-## Performance
-
-* Data type: float64 (fig_02 is a partial view of fig_01)
-
-  ![Fig 01. Result of test (error)][dtype_float64_error]
-
-  ![Fig 02. Result of benchmark (cost)][dtype_float64_cost]
-
-
 ## Reference
 [wikipedia - Goertzel](https://en.wikipedia.org/wiki/Goertzel_algorithm)
 [stackoverflow - Implementation of Goertzel algorithm in C](http://stackoverflow.com/questions/11579367)
 
-[dtype_float64_error]: https://i.imgur.com/Lf6CbBW.png
+[dtype_float64_error]: https://i.imgur.com/eycHvfh.png
 [dtype_float64_cost]: https://i.imgur.com/Lf6CbBW.png
 
 [STFT]: https://en.wikipedia.org/wiki/Short-time_Fourier_transform

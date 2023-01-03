@@ -220,6 +220,7 @@ if __name__ == '__main__':
     plt.legend()
     plt.ylabel("time (dBs)")
     plt.xlabel("length (samples)")
+    plt.savefig("cost.png", bbox_inches="tight")
 
     plt.figure(2)
     for k in BenchType:
@@ -230,4 +231,5 @@ if __name__ == '__main__':
     plt.legend()
     plt.ylabel("error")
     plt.xlabel("length (samples)")
+    plt.savefig("error.png", bbox_inches="tight")
     plt.show()

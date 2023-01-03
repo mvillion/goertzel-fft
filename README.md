@@ -7,7 +7,15 @@
 
 To evaluate the power of specific frequency component in signal, `Goertzel algorithm` will be a better solution than `fast Fourier transform (FFT)`. Because `Goertzel algorithm` allows us to evaluate a single `DFT (Discrete Fourier Transform)` term at a time.
 
-But the computational time is related to the size of data. If we need to analyze a huge volume of data, how can we improve the performance? In this project, `short-time technique` is introduced. It allows us to take less computational time with an acceptable error tolerance (depends on the argument `window` given by user).
+As Goertzel algorithm computes a single output frequency, it is faster than FFT.
+
+First problem:
+How much master Goertzel is? How can it be made faster?
+
+Second problem:
+If Goertzel is used to compute all frequencies, how much slower Goertzel is?
+This problem does not fully make sense.
+
 
 ## Environments
 ### Machine
@@ -71,17 +79,17 @@ But the computational time is related to the size of data. If we need to analyze
 
 * Data type: float64 (fig_02 is a partial view of fig_01)
 
-  ![Fig 01. Result of benchmark][dtype_float64_o]
+  ![Fig 01. Result of test (error)][dtype_float64_error]
 
-  ![Fig 02. Result of benchmark (zoomed in)][dtype_float64_z]
+  ![Fig 02. Result of benchmark (csot)][dtype_float64_cost]
 
 
 ## Reference
 [wikipedia - Goertzel](https://en.wikipedia.org/wiki/Goertzel_algorithm)
 [stackoverflow - Implementation of Goertzel algorithm in C](http://stackoverflow.com/questions/11579367)
 
-[dtype_float64_o]: https://i.imgur.com/vV9pjDE.png
-[dtype_float64_z]: https://i.imgur.com/Bw3ohXI.png
+[dtype_float64_error]: https://imgur.com/a/zbqqTzH
+[dtype_float64_cost]: https://imgur.com/a/p9J1xNW
 
 [STFT]: https://en.wikipedia.org/wiki/Short-time_Fourier_transform
 [launch_on_binder]: https://mybinder.org/v2/gh/NaleRaphael/goertzel-fft/master?filepath=doc%2Fipynb%2Fdemo_simple_example.ipynb

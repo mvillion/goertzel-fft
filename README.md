@@ -14,7 +14,9 @@ How much master Goertzel is? How can it be made faster?
 
   ![Fig 01. Result of benchmark (cost)][dtype_float64_cost]
 
-Higher order radix are faster up to 8..
+Higher order radix are faster up to 8.
+radix-12 is not faster than 8.
+radix-16 does not seem to be possible with only 16 registers.
 SSE and AVX are not necessarily faster but AVX allows using less registers,
 which in the end enables faster versions.
 

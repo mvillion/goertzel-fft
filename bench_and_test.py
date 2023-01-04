@@ -19,9 +19,12 @@ bench_list = [
     "goertzel_rad8_py",
     "goertzel_rad8_avx",
     "goertzel_rad12_avx",
-    "goertzel_dft",
-    "goertzel_dft_rad2",
-    "goertzel_dft_rad2_sse",
+    "goertzel_rad16_avx",
+    "goertzel_rad20_avx",
+    "goertzel_rad24_avx",
+    # "goertzel_dft",
+    # "goertzel_dft_rad2",
+    # "goertzel_dft_rad2_sse",
 ]
 BenchType = Enum("BenchType", bench_list, start=0)
 
@@ -167,6 +170,9 @@ def bench_goertzel(data_len, n_test=10000):
         "goertzel_rad8_py": goertzel_rad8_py,
         "goertzel_rad8_avx": dsp_ext.goertzel_rad8_avx,
         "goertzel_rad12_avx": dsp_ext.goertzel_rad12_avx,
+        "goertzel_rad16_avx": dsp_ext.goertzel_rad16_avx,
+        "goertzel_rad20_avx": dsp_ext.goertzel_rad20_avx,
+        "goertzel_rad24_avx": dsp_ext.goertzel_rad24_avx,
     }
     for type_str, fun in bench2fun.items():
         try:
@@ -211,7 +217,7 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
-    cost, error = bench_range(len_range, n_test=10)
+    cost, error = bench_range(len_range, n_test=100)
 
     from matplotlib import pyplot as plt
     plt.figure(1)
@@ -223,6 +229,14 @@ if __name__ == '__main__':
     plt.savefig("cost.png", bbox_inches="tight")
 
     plt.figure(2)
+    for k in BenchType:
+        plt.plot(len_range, cost[k.value, :], label=k.name)
+    plt.legend()
+    plt.ylabel("time (s)")
+    plt.xlabel("length (samples)")
+    plt.savefig("cost.png", bbox_inches="tight")
+
+    plt.figure(3)
     for k in BenchType:
         if np.isnan(error[k.value, :]).all():
             plt.plot(np.arange(1), np.arange(1), label="%s vs fft" % k.name)

@@ -327,6 +327,24 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
 #undef GOERTZEL_AVX
 #undef RADIX
 
+#define RADIX 16
+#define GOERTZEL_AVX goertzel_rad16_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 20
+#define GOERTZEL_AVX goertzel_rad20_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 24
+#define GOERTZEL_AVX goertzel_rad24_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
 void goertzel_rad4x2_avx(
     double *data, long data_len, double k[2], double *out[2])
 {
@@ -355,20 +373,21 @@ void goertzel_rad4x2_avx(
     long int i;
     for (i = 0; i < data_len/12*12; i += 12)
     {
-        q0[0] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[0], q1[0]), q2[0]), *(data_pd));
-        q0[1] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[1], q1[1]), q2[1]), *(data_pd++));
-
-        q2[0] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[0], q0[0]), q1[0]), *(data_pd));
-        q2[1] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[1], q0[1]), q1[1]), *(data_pd++));
-
-        q1[0] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[0], q2[0]), q0[0]), *(data_pd));
-        q1[1] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-            coeff[1], q2[1]), q0[1]), *(data_pd++));
+        __m256d data4 = *(data_pd++);
+        #pragma GCC unroll 8
+        for (int m = 0; m < 2; m++)
+            q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                coeff[m], q1[m]), q2[m]), data4);
+        __m256d data4 = *(data_pd++);
+        #pragma GCC unroll 8
+        for (int m = 0; m < 2; m++)
+            q2[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                coeff[m], q0[m]), q1[m]), data4);
+        __m256d data4 = *(data_pd++);
+        #pragma GCC unroll 8
+        for (int m = 0; m < 2; m++)
+            q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                coeff[m], q2[m]), q0[m]), data4);
     }
     for (; i < data_len; i += 4)
         for (int m = 0; m < 2; m++)

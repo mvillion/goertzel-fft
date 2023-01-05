@@ -69,3 +69,6 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
     out[0] = i_t*cw-out[1]*sw;
     out[1] = i_t*sw+out[1]*cw;
 }
+
+// cos(2*w) = 1-2*sin(w)*sin(w)
+// sin(2*w) = 2*cos(w)*sin(w)

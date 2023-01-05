@@ -145,6 +145,11 @@ static PyObject* dsp_goertzel_rad24_avx(PyObject* self, PyObject* args)
     return dsp_goertzel_template(self, args, &goertzel_rad24_avx, NULL);
 }
 
+static PyObject* dsp_goertzel_rad4x2_test(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, &goertzel_rad4x2_test, NULL);
+}
+
 static PyObject* dsp_goertzel_dft(PyObject* self, PyObject* args)
 {
     return dsp_goertzel_dft_template(
@@ -217,6 +222,11 @@ static PyMethodDef methods[] = {
         "goertzel_rad24_avx", dsp_goertzel_rad24_avx,
         METH_VARARGS,
         "Goertzel radix-24 algorithm using AVX instructions."
+    },
+    {
+        "goertzel_rad4x2_test", dsp_goertzel_rad4x2_test,
+        METH_VARARGS,
+        "Goertzel radix-4 algorithm using AVX instructions on 2 frequencies."
     },
     {
         "goertzel_dft", dsp_goertzel_dft,

@@ -16,12 +16,13 @@ bench_list = [
     # "goertzel_rad4_py",
     "goertzel_rad4",
     "goertzel_rad4_avx",
-    "goertzel_rad8_py",
-    "goertzel_rad8_avx",
-    "goertzel_rad12_avx",
-    "goertzel_rad16_avx",
-    "goertzel_rad20_avx",
-    "goertzel_rad24_avx",
+    "goertzel_rad4x2_test",
+    # "goertzel_rad8_py",
+    # "goertzel_rad8_avx",
+    # "goertzel_rad12_avx",
+    # "goertzel_rad16_avx",
+    # "goertzel_rad20_avx",
+    # "goertzel_rad24_avx",
     # "goertzel_dft",
     # "goertzel_dft_rad2",
     # "goertzel_dft_rad2_sse",
@@ -167,6 +168,7 @@ def bench_goertzel(data_len, n_test=10000):
         "goertzel_rad4_py": goertzel_radix_py,
         "goertzel_rad4": dsp_ext.goertzel_rad4,
         "goertzel_rad4_avx": dsp_ext.goertzel_rad4_avx,
+        "goertzel_rad4x2_test": dsp_ext.goertzel_rad4x2_test,
         "goertzel_rad8_py": goertzel_rad8_py,
         "goertzel_rad8_avx": dsp_ext.goertzel_rad8_avx,
         "goertzel_rad12_avx": dsp_ext.goertzel_rad12_avx,
@@ -207,7 +209,7 @@ if __name__ == '__main__':
         print("dummy exit")
         sys.exit()
 
-    len_range = np.arange(16, 17)
+    len_range = np.arange(24, 25)
     cost, error = bench_range(len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
@@ -217,7 +219,7 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
-    cost, error = bench_range(len_range, n_test=100)
+    cost, error = bench_range(len_range, n_test=10)
 
     from matplotlib import pyplot as plt
     plt.figure(1)

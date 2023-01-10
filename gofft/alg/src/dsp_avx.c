@@ -17,20 +17,25 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
     __m256d *data_pd = (__m256d *)data;
 
     long int i;
-    for (i = 0; i < data_len/(RADIX*3)*(RADIX*3); i += RADIX*3)
+    long int step = RADIX*3*UNROLL_FACTOR;
+    for (i = 0; i < data_len/step*step; i += step)
     {
         #pragma GCC unroll 8
-        for (int m = 0; m < RADIX/4; m++)
-            q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff, q1[m]), q2[m]), *(data_pd++));
-        #pragma GCC unroll 8
-        for (int m = 0; m < RADIX/4; m++)
-            q2[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff, q0[m]), q1[m]), *(data_pd++));
-        #pragma GCC unroll 8
-        for (int m = 0; m < RADIX/4; m++)
-            q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff, q2[m]), q0[m]), *(data_pd++));
+        for (int i_unroll = 0; i_unroll < UNROLL_FACTOR; i_unroll++)
+        {
+            #pragma GCC unroll 8
+            for (int m = 0; m < RADIX/4; m++)
+                q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                    coeff, q1[m]), q2[m]), *(data_pd++));
+            #pragma GCC unroll 8
+            for (int m = 0; m < RADIX/4; m++)
+                q2[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                    coeff, q0[m]), q1[m]), *(data_pd++));
+            #pragma GCC unroll 8
+            for (int m = 0; m < RADIX/4; m++)
+                q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
+                    coeff, q2[m]), q0[m]), *(data_pd++));
+        }
     }
     for (; i < data_len; i += RADIX)
         for (int m = 0; m < RADIX/4; m++)

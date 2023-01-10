@@ -120,6 +120,16 @@ static PyObject* dsp_goertzel_rad4_avx(PyObject* self, PyObject* args)
     return dsp_goertzel_template(self, args, &goertzel_rad4_avx, NULL);
 }
 
+static PyObject* dsp_goertzel_rad4u2_avx(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, &goertzel_rad4u2_avx, NULL);
+}
+
+static PyObject* dsp_goertzel_rad4u4_avx(PyObject* self, PyObject* args)
+{
+    return dsp_goertzel_template(self, args, &goertzel_rad4u4_avx, NULL);
+}
+
 static PyObject* dsp_goertzel_rad8_avx(PyObject* self, PyObject* args)
 {
     return dsp_goertzel_template(self, args, &goertzel_rad8_avx, NULL);
@@ -197,6 +207,16 @@ static PyMethodDef methods[] = {
         "goertzel_rad4_avx", dsp_goertzel_rad4_avx,
         METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions."
+    },
+    {
+        "goertzel_rad4u2_avx", dsp_goertzel_rad4u2_avx,
+        METH_VARARGS,
+        "Goertzel radix-4 algorithm using AVX instructions (unrolled 2 times)."
+    },
+    {
+        "goertzel_rad4u4_avx", dsp_goertzel_rad4u4_avx,
+        METH_VARARGS,
+        "Goertzel radix-4 algorithm using AVX instructions (unrolled 4 times)."
     },
     {
         "goertzel_rad8_avx", dsp_goertzel_rad8_avx,

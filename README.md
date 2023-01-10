@@ -24,6 +24,22 @@ which in the end enables faster versions.
 
 Higher order radix have better numerical precision.
 
+Here is the core loop of rad4_avx. Registers used are 0, 1, 2, 5; 4 out of 16. Many registers are available for e.g. processing other frequencies.
+
+    /-> vmulpd %ymm5,%ymm0,%ymm2
+    |   vsubpd %ymm1,%ymm2,%ymm2
+    |   vaddpd (%rcx,%r15,8),%ymm2,%ymm2
+    |   vmulpd %ymm2,%ymm5,%ymm1
+    |   vsubpd %ymm0,%ymm1,%ymm1
+    |   vaddpd 0x20(%rcx,%r15,8),%ymm1,%ymm1
+    |   vmulpd %ymm1,%ymm5,%ymm0
+    |   vsubpd %ymm2,%ymm0,%ymm0
+    |   vaddpd 0x40(%rcx,%r15,8),%ymm0,%ymm0
+    |   add    $0xc,%r15
+    |   cmp    %rax,%r15
+    \-- jl     <goertzel_rad4_avx+0xe0>
+
+
 Second problem:
 If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.

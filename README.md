@@ -9,8 +9,7 @@ To evaluate the power of specific frequency component in signal, `Goertzel algor
 
 As Goertzel algorithm computes a single output frequency, it is faster than FFT.
 
-First problem:
-How much master Goertzel is? How can it be made faster?
+## First problem: How much master Goertzel is? How can it be made faster?
 
   ![Fig 01. Result of benchmark (cost)][dtype_float64_cost]
 
@@ -40,9 +39,9 @@ Here is the core loop of rad4_avx. Registers used are 0, 1, 2, 5; 4 out of 16. M
     \-- jl     <goertzel_rad4_avx+0xe0>
 
 
-Second problem:
-If Goertzel is used to compute all frequencies, how much slower Goertzel is?
+## Second problem: If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.
+It is an exercise to process more than one frequency.
 
 
 ## Environments

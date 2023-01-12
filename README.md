@@ -9,21 +9,68 @@ To evaluate the power of specific frequency component in signal, `Goertzel algor
 
 As Goertzel algorithm computes a single output frequency, it is faster than FFT.
 
-## First problem: How much master Goertzel is? How can it be made faster?
+## First problem: How much faster Goertzel is? How can it be made faster?
 
-  ![Fig 01. Result of benchmark (cost)][dtype_float64_cost]
+### Introductory results
 
-Higher order radix are faster up to 8.
-radix-12 is not faster than 8.
-radix-16 does not seem to be possible with only 16 registers.
-SSE and AVX are not necessarily faster but AVX allows using less registers,
-which in the end enables faster versions.
+Goertzel is indeed faster than FFT.
 
-  ![Fig 01. Result of test (error)][dtype_float64_error]
+![Alt text](media/intro_cost_db.png?raw=true "Goertzel vs DFT vs FFT (cost)")
 
-Higher order radix have better numerical precision.
+Cost is represented in measured time with a logarithmic scale.
 
-Here is the core loop of rad4_avx. Registers used are 0, 1, 2, 5; 4 out of 16. Many registers are available for e.g. processing other frequencies.
+### Radix-Goerztel to use SSE and AVX instructions
+
+SSE can process 2 double values at a time but for a simple implementation, it is practical to split even and odd values of the Goertzel computation to enable parallel computation.
+
+With AVX, the problem is the same but with 4 double values at a time.
+
+A radix-4 not using AVX intrinsics (goertzel_rad4) is compiled as:
+
+    /-> vmulsd %xmm4,%xmm0,%xmm9
+    |   add    $0xc,%r13
+    |   add    $0x60,%rax
+    |   vmulsd %xmm3,%xmm0,%xmm8
+    |   vmulsd %xmm2,%xmm0,%xmm7
+    |   vmulsd %xmm1,%xmm0,%xmm6
+    |   vsubsd %xmm5,%xmm9,%xmm9
+    |   vaddsd -0x60(%rax),%xmm9,%xmm9
+    |   vsubsd %xmm10,%xmm8,%xmm8
+    |   vaddsd -0x58(%rax),%xmm8,%xmm8
+    |   vsubsd %xmm11,%xmm7,%xmm7
+    |   vaddsd -0x50(%rax),%xmm7,%xmm7
+    |   vmulsd %xmm9,%xmm0,%xmm5
+    |   vsubsd %xmm12,%xmm6,%xmm6
+    |   vaddsd -0x48(%rax),%xmm6,%xmm6
+    |   vsubsd %xmm4,%xmm5,%xmm5
+    |   vmulsd %xmm8,%xmm0,%xmm4
+    |   vaddsd -0x40(%rax),%xmm5,%xmm5
+    |   vsubsd %xmm3,%xmm4,%xmm3
+    |   vaddsd -0x38(%rax),%xmm3,%xmm10
+    |   vmulsd %xmm7,%xmm0,%xmm3
+    |   vmulsd %xmm5,%xmm0,%xmm4
+    |   vsubsd %xmm2,%xmm3,%xmm2
+    |   vaddsd -0x30(%rax),%xmm2,%xmm11
+    |   vmulsd %xmm6,%xmm0,%xmm2
+    |   vmulsd %xmm10,%xmm0,%xmm3
+    |   vsubsd %xmm9,%xmm4,%xmm4
+    |   vaddsd -0x20(%rax),%xmm4,%xmm4
+    |   vsubsd %xmm1,%xmm2,%xmm1
+    |   vaddsd -0x28(%rax),%xmm1,%xmm12
+    |   vmulsd %xmm11,%xmm0,%xmm2
+    |   vsubsd %xmm8,%xmm3,%xmm3
+    |   vaddsd -0x18(%rax),%xmm3,%xmm3
+    |   vmulsd %xmm12,%xmm0,%xmm1
+    |   vsubsd %xmm7,%xmm2,%xmm2
+    |   vaddsd -0x10(%rax),%xmm2,%xmm2
+    |   vsubsd %xmm6,%xmm1,%xmm1
+    |   vaddsd -0x8(%rax),%xmm1,%xmm1
+    |   cmp    %rdx,%r13
+    \-- jl     <goertzel_rad4+0x100>
+
+These 40 instructions are using only "sd" instructions with single double operations.
+
+Equivalent AVX code (goertzel_rad4_avx) is using only 12 instructions.
 
     /-> vmulpd %ymm5,%ymm0,%ymm2
     |   vsubpd %ymm1,%ymm2,%ymm2
@@ -38,6 +85,27 @@ Here is the core loop of rad4_avx. Registers used are 0, 1, 2, 5; 4 out of 16. M
     |   cmp    %rax,%r15
     \-- jl     <goertzel_rad4_avx+0xe0>
 
+Registers used are 0, 1, 2, 5; 4 out of 16. Many registers are available for e.g. processing other frequencies.
+With a number of instructions reduced by a factor of almost 4, a substantial increase in performance could be expected.
+Figures astonishingly prove the contrary:
+
+![Alt text](media/radix_cost_db.png?raw=true "Goertzel non-radix vs radix (cost)")
+
+Efforts for code optimization do not seem to be fruitful using AVX. Explanation will be given in the next section.
+
+Radix-8 is possible because of the reduced number of registers used so in the end AVX optimisation gives a marginal gain.
+
+Higher order radix are faster and also give better numerical precision.
+
+![Alt text](media/radix_error.png?raw=true "Goertzel vs DFT vs FFT (error)")
+
+### Is radix-8 faster because of loop-unrolling?
+
+
+### influence of the processor
+On a slow AMD processor, higher order radix are faster up to 8.
+radix-12 is not faster than 8.
+As a register is used for the 2*cos factor and 3 registers are needed for 4 values radix-20 is the limit (1+3*5) to avoid using stack memory access.
 
 ## Second problem: If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.
@@ -105,9 +173,6 @@ It is an exercise to process more than one frequency.
 ## Reference
 [wikipedia - Goertzel](https://en.wikipedia.org/wiki/Goertzel_algorithm)
 [stackoverflow - Implementation of Goertzel algorithm in C](http://stackoverflow.com/questions/11579367)
-
-[dtype_float64_error]: https://i.imgur.com/eycHvfh.png
-[dtype_float64_cost]: https://i.imgur.com/Lf6CbBW.png
 
 [STFT]: https://en.wikipedia.org/wiki/Short-time_Fourier_transform
 [launch_on_binder]: https://mybinder.org/v2/gh/NaleRaphael/goertzel-fft/master?filepath=doc%2Fipynb%2Fdemo_simple_example.ipynb

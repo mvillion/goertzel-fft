@@ -101,6 +101,68 @@ Higher order radix are faster and also give better numerical precision.
 
 ### Is radix-8 faster because of loop-unrolling?
 
+Core loop of radix-8 (goertzel_rad8_avx) is:
+
+    /-> vmulpd %ymm3,%ymm1,%ymm2
+    |   add    $0x18,%rbx
+    |   add    $0xc0,%rax
+    |   vmulpd %ymm3,%ymm0,%ymm8
+    |   vsubpd %ymm6,%ymm2,%ymm2
+    |   vaddpd -0xc0(%rax),%ymm2,%ymm2
+    |   vsubpd %ymm7,%ymm8,%ymm7
+    |   vaddpd -0xa0(%rax),%ymm7,%ymm8
+    |   vmulpd %ymm2,%ymm3,%ymm6
+    |   vsubpd %ymm1,%ymm6,%ymm1
+    |   vaddpd -0x80(%rax),%ymm1,%ymm6
+    |   vmulpd %ymm8,%ymm3,%ymm1
+    |   vsubpd %ymm0,%ymm1,%ymm0
+    |   vaddpd -0x60(%rax),%ymm0,%ymm7
+    |   vmulpd %ymm6,%ymm3,%ymm1
+    |   vmulpd %ymm7,%ymm3,%ymm0
+    |   vsubpd %ymm2,%ymm1,%ymm1
+    |   vmovupd -0x20(%rax),%ymm2
+    |   vaddpd -0x40(%rax),%ymm1,%ymm1
+    |   vsubpd %ymm8,%ymm0,%ymm0
+    |   vaddpd %ymm2,%ymm0,%ymm0
+    |   cmp    %rdx,%rbx
+    \-- jl     <goertzel_rad8_avx+0x110>
+
+12 operations from radix-4 are now 23 operations.
+
+With a radix-4 unrolled 2 times (goertzel_rad4u2_avx), the code is:
+
+    /-> vmulpd %ymm0,%ymm2,%ymm3
+    |   add    $0x18,%r15
+    |   vmovupd 0xa0(%rax),%ymm6
+    |   add    $0xc0,%rax
+    |   vsubpd %ymm1,%ymm3,%ymm3
+    |   vaddpd -0xc0(%rax),%ymm3,%ymm3
+    |   vmulpd %ymm3,%ymm2,%ymm1
+    |   vsubpd %ymm0,%ymm1,%ymm1
+    |   vaddpd -0xa0(%rax),%ymm1,%ymm1
+    |   vmulpd %ymm1,%ymm2,%ymm0
+    |   vsubpd %ymm3,%ymm0,%ymm0
+    |   vaddpd -0x80(%rax),%ymm0,%ymm0
+    |   vmulpd %ymm0,%ymm2,%ymm3
+    |   vsubpd %ymm1,%ymm3,%ymm3
+    |   vaddpd -0x60(%rax),%ymm3,%ymm3
+    |   vmulpd %ymm3,%ymm2,%ymm1
+    |   vsubpd %ymm0,%ymm1,%ymm1
+    |   vaddpd -0x40(%rax),%ymm1,%ymm1
+    |   vmulpd %ymm1,%ymm2,%ymm0
+    |   vsubpd %ymm3,%ymm0,%ymm0
+    |   vaddpd %ymm6,%ymm0,%ymm0
+    |   cmp    %rdx,%r15
+    \-- jl     <goertzel_rad4u2_avx+0xf0>
+
+The code looks indentical but using 4 registers instead of 7.
+
+![Alt text](media/unroll_cost_db.png?raw=true "Influence of loop unrolling (cost)")
+
+Loop unrolling have no influence. Branch prediction is likely efficient and correctly predicts that this core loop is looping.
+
+Radix-8 is still faster with identicaly operations!
+PC processors are using out-of-order execution and as radix-8 instructions from the two sets of avx registers are not dependent on each other, many operations can be executed in a single cycle. This also explains why non-AVX code could execute as fast as AVX code.
 
 ### influence of the processor
 On a slow AMD processor, higher order radix are faster up to 8.

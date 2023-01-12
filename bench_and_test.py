@@ -282,3 +282,15 @@ if __name__ == '__main__':
     ]
     bench_and_plot(
         bench_list, len_range, media_path, "radix", title_str, n_test=n_test)
+
+    title_str = "Influence of unrolling"
+    bench_list = [
+        "goertzel",
+        "goertzel_rad4_avx",
+        "goertzel_rad4u2_avx",
+        "goertzel_rad4u4_avx",
+        "goertzel_rad8_avx",
+        "goertzel_rad16_avx",
+    ]
+    bench_and_plot(
+        bench_list, len_range, media_path, "unroll", title_str, n_test=n_test)

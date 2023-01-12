@@ -4,6 +4,7 @@ import sys
 
 from enum import Enum
 from gofft_directory import dsp_ext
+from pathlib import Path
 from time import time
 
 bench_list = [
@@ -16,15 +17,18 @@ bench_list = [
     # "goertzel_rad4_py",
     # "goertzel_rad4",
     "goertzel_rad4_avx",
-    "goertzel_rad4u2_avx",
-    "goertzel_rad4u4_avx",
-    # "goertzel_rad4x2_test",
+    # "goertzel_rad4u2_avx",
+    # "goertzel_rad4u4_avx",
+    "goertzel_rad4x2_test",
     # "goertzel_rad8_py",
     "goertzel_rad8_avx",
-    "goertzel_rad12_avx",
-    "goertzel_rad16_avx",
-    "goertzel_rad20_avx",
-    "goertzel_rad24_avx",
+    # "goertzel_rad12_avx",
+    # "goertzel_rad16_avx",
+    # "goertzel_rad20_avx",
+    # "goertzel_rad24_avx",
+    # "goertzel_rad4_fma",
+    # "goertzel_rad8_fma",
+    # "goertzel_rad20_fma",
     # "goertzel_dft",
     # "goertzel_dft_rad2",
     # "goertzel_dft_rad2_sse",
@@ -122,69 +126,59 @@ def goertzel_rad8_py(data, k):
     return goertzel_radix_py(data, k, radix=8)
 
 
-def bench_goertzel(data_len, n_test=10000):
+def bench_goertzel(BenchType, data_len, n_test=10000):
     rng = np.random.Generator(np.random.SFC64())
     in_data = rng.random((n_test, data_len), np.float64)
 
     cost = np.empty(len(BenchType))
     error = np.empty(len(BenchType))
 
-    # dft, protection against memory errors
-    if data_len < 1024:
-        x = np.arange(data_len)
-        F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
-        t0 = time()
-        out = in_data @ F
-        cost[BenchType.dft.value] = time()-t0
-    else:
-        out = np.nan
-        cost[BenchType.dft.value] = np.nan
-
     # fft
     t0 = time()
     out_fft = np.fft.fft(in_data)
-    cost[BenchType.fft.value] = time()-t0
-    error[BenchType.dft.value] = (out-out_fft).std(axis=-1).max()
-    error[BenchType.fft.value] = np.nan
+    try:
+        cost[BenchType.fft.value] = time()-t0
+        error[BenchType.fft.value] = np.nan
+    except AttributeError:
+        pass
 
-    bench2fun = {
-        "goertzel_dft": dsp_ext.goertzel_dft,
-        "goertzel_dft_rad2": dsp_ext.goertzel_dft_rad2,
-        "goertzel_dft_rad2_sse": dsp_ext.goertzel_dft_rad2_sse,
-    }
-    for type_str, fun in bench2fun.items():
+    # dft, protection against memory errors
+    try:
+        if data_len < 1024:
+            x = np.arange(data_len)
+            F = np.exp(-2j*np.pi/data_len*np.outer(x, x))
+            t0 = time()
+            out = in_data @ F
+            cost[BenchType.dft.value] = time()-t0
+        else:
+            out = np.nan
+            cost[BenchType.dft.value] = np.nan
+        error[BenchType.dft.value] = (out-out_fft).std(axis=-1).max()
+    except AttributeError:
+        pass
+
+    for etype in BenchType:
+        if "_dft" not in etype.name:
+            continue
         try:
-            etype = BenchType[type_str]
-        except KeyError:
+            fun = getattr(dsp_ext, etype.name)
+        except AttributeError:
             continue
         t0 = time()
         out = fun(in_data, np.nan)
         cost[etype.value] = time()-t0
         error[etype.value] = (out-out_fft).std(axis=-1).max()
 
-    bench2fun = {
-        "goertzel": dsp_ext.goertzel,
-        "goertzel_rad2_py": goertzel_rad2_py,
-        "goertzel_rad2": dsp_ext.goertzel_rad2,
-        "goertzel_rad2_sse": dsp_ext.goertzel_rad2_sse,
-        "goertzel_rad4_py": goertzel_radix_py,
-        "goertzel_rad4": dsp_ext.goertzel_rad4,
-        "goertzel_rad4_avx": dsp_ext.goertzel_rad4_avx,
-        "goertzel_rad4u2_avx": dsp_ext.goertzel_rad4u2_avx,
-        "goertzel_rad4u4_avx": dsp_ext.goertzel_rad4u4_avx,
-        "goertzel_rad4x2_test": dsp_ext.goertzel_rad4x2_test,
-        "goertzel_rad8_py": goertzel_rad8_py,
-        "goertzel_rad8_avx": dsp_ext.goertzel_rad8_avx,
-        "goertzel_rad12_avx": dsp_ext.goertzel_rad12_avx,
-        "goertzel_rad16_avx": dsp_ext.goertzel_rad16_avx,
-        "goertzel_rad20_avx": dsp_ext.goertzel_rad20_avx,
-        "goertzel_rad24_avx": dsp_ext.goertzel_rad24_avx,
-    }
-    for type_str, fun in bench2fun.items():
-        try:
-            etype = BenchType[type_str]
-        except KeyError:
+    for etype in BenchType:
+        if "_dft" in etype.name:
             continue
+        try:
+            fun = getattr(dsp_ext, etype.name)
+        except AttributeError:
+            try:
+                fun = globals()[etype.name]
+            except KeyError:
+                continue
         out = np.empty_like(out_fft)
         cost_goertzel = 0
         for k in range(data_len):
@@ -198,41 +192,34 @@ def bench_goertzel(data_len, n_test=10000):
     return cost, error
 
 
-def bench_range(len_range, n_test=10000):
+def bench_range(BenchType, len_range, n_test=10000):
     cost = np.empty((len(BenchType), len(len_range)))
     error = np.empty((len(BenchType), len(len_range)))
     for i, data_len in enumerate(len_range):
         print("data_len %d" % data_len)
-        cost[:, i], error[:, i] = bench_goertzel(data_len, n_test=n_test)
+        cost[:, i], error[:, i] = bench_goertzel(
+            BenchType, data_len, n_test=n_test)
 
     return cost, error
 
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        print("dummy exit")
-        sys.exit()
+def bench_and_plot(
+        bench_list, len_range, media_path, plot_prefix, title_str, n_test=100):
 
-    len_range = np.arange(24, 25)
-    cost, error = bench_range(len_range, n_test=2)
-    for m, data_len in enumerate(len_range):
-        cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
-        print(", ".join(cost_str))
-    # sys.exit()
+    BenchType = Enum("BenchType", bench_list, start=0)
+    cost, error = bench_range(BenchType, len_range, n_test=n_test)
 
-    len_range = np.concatenate((
-        np.arange(1, 64), np.arange(64, 1024, 64),
-        2**np.arange(10, 13)))
-    cost, error = bench_range(len_range, n_test=10)
-
+    prefix = "/".join([str(media_path), plot_prefix])
     from matplotlib import pyplot as plt
+    plt.close("all")
     plt.figure(1)
     for k in BenchType:
         plt.plot(len_range, 10*np.log10(cost[k.value, :]), label=k.name)
     plt.legend()
     plt.ylabel("time (dBs)")
     plt.xlabel("length (samples)")
-    plt.savefig("cost.png", bbox_inches="tight")
+    plt.title(title_str)
+    plt.savefig("%s_cost_db.png" % prefix, bbox_inches="tight")
 
     plt.figure(2)
     for k in BenchType:
@@ -240,7 +227,8 @@ if __name__ == '__main__':
     plt.legend()
     plt.ylabel("time (s)")
     plt.xlabel("length (samples)")
-    plt.savefig("cost.png", bbox_inches="tight")
+    plt.title(title_str)
+    plt.savefig("%s_cost.png" % prefix, bbox_inches="tight")
 
     plt.figure(3)
     for k in BenchType:
@@ -251,5 +239,46 @@ if __name__ == '__main__':
     plt.legend()
     plt.ylabel("error")
     plt.xlabel("length (samples)")
-    plt.savefig("error.png", bbox_inches="tight")
+    plt.title(title_str)
+    plt.savefig("%s_error.png" % prefix, bbox_inches="tight")
     plt.show()
+    plt.pause(5)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        print("dummy exit")
+        sys.exit()
+
+    len_range = np.arange(24, 25)
+    cost, error = bench_range(BenchType, len_range, n_test=2)
+    for m, data_len in enumerate(len_range):
+        cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
+        print(", ".join(cost_str))
+    # sys.exit()
+
+    media_path = Path(".") / "media_tmp"
+    media_path.mkdir(exist_ok=True)
+    n_test = 100
+
+    len_range = np.concatenate((
+        np.arange(1, 64), np.arange(64, 1024, 64),
+        2**np.arange(10, 13)))
+
+    title_str = "Goertzel vs DFT vs FFT"
+    bench_list = ["dft", "fft", "goertzel"]
+    bench_and_plot(
+        bench_list, len_range, media_path, "intro", title_str, n_test=n_test)
+
+    title_str = "Faster Goertzel w/ radix"
+    bench_list = [
+        "fft",
+        "goertzel",
+        "goertzel_rad2",
+        "goertzel_rad2_sse",
+        "goertzel_rad4",
+        "goertzel_rad4_avx",
+        "goertzel_rad8_avx",
+    ]
+    bench_and_plot(
+        bench_list, len_range, media_path, "radix", title_str, n_test=n_test)

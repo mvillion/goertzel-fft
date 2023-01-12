@@ -4,6 +4,7 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
     double sw = sin(omega);
     double cw = cos(omega);
     __m256d coeff = _mm256_set1_pd(2.0*cw);
+    __m256d data4;
 
     __m256d q0[RADIX/4]; // radix-RADIX state variables
     __m256d q1[RADIX/4];
@@ -14,7 +15,7 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
         q1[m] = _mm256_setzero_pd();
         q2[m] = _mm256_setzero_pd();
     }
-    __m256d *data_pd = (__m256d *)data;
+    double *data_ptr = data;
 
     long int i;
     long int step = RADIX*3*UNROLL_FACTOR;
@@ -25,27 +26,39 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
         {
             #pragma GCC unroll 8
             for (int m = 0; m < RADIX/4; m++)
+            {
+                data4 = _mm256_loadu_pd(data_ptr);
+                data_ptr += 4;
                 q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                    coeff, q1[m]), q2[m]), *(data_pd++));
+                    coeff, q1[m]), q2[m]), data4);
+            }
             #pragma GCC unroll 8
             for (int m = 0; m < RADIX/4; m++)
+            {
+                data4 = _mm256_loadu_pd(data_ptr);
+                data_ptr += 4;
                 q2[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                    coeff, q0[m]), q1[m]), *(data_pd++));
+                    coeff, q0[m]), q1[m]), data4);
+            }
             #pragma GCC unroll 8
             for (int m = 0; m < RADIX/4; m++)
+            {
+                data4 = _mm256_loadu_pd(data_ptr);
+                data_ptr += 4;
                 q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                    coeff, q2[m]), q0[m]), *(data_pd++));
+                    coeff, q2[m]), q0[m]), data4);
+            }
         }
     }
     for (; i < data_len; i += RADIX)
         for (int m = 0; m < RADIX/4; m++)
         {
             // zero-pad values in range data_len/4*4:data_len
-            __m256d data_i = _mm256_setzero_pd();
+            data4 = _mm256_setzero_pd();
             for (long int j = 0; j < MAX(0, MIN(4, data_len-i-4*m)); j++)
-                data_i[j] = data[i+4*m+j];
+                data4[j] = data[i+4*m+j];
             q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff, q1[m]), q2[m]), data_i);
+                coeff, q1[m]), q2[m]), data4);
             q2[m] = q1[m];
             q1[m] = q0[m];
         }

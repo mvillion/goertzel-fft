@@ -387,94 +387,9 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
 #undef UNROLL_FACTOR
 
 #define N_RADIX 2
-void goertzel_rad4x2_avx(
-    double *data, long data_len, double *k, double *out)
-{
-    double omega;
-    double sw[N_RADIX];
-    double cw[N_RADIX];
-    __m256d coeff[N_RADIX];
-    __m256d data4;
-
-    __m256d q0[N_RADIX]; // quad radix-4 state variables
-    __m256d q1[N_RADIX];
-    __m256d q2[N_RADIX];
-    double *data_ptr = data;
-
-    for (int m = 0; m < N_RADIX; m++)
-    {
-        omega = 2.0*M_PI*4*k[m]/data_len;
-        sw[m] = sin(omega);
-        cw[m] = cos(omega);
-        coeff[m] = _mm256_set1_pd(2.0*cw[m]);
-
-        q0[m] = _mm256_setzero_pd(); // quad radix-4 state variables
-        q2[m] = _mm256_setzero_pd();
-        q1[m] = _mm256_setzero_pd();
-    }
-
-    long int i;
-    for (i = 0; i < data_len/12*12; i += 12)
-    {
-        data4 = _mm256_loadu_pd(data_ptr);
-        data_ptr += 4;
-        #pragma GCC unroll 8
-        for (int m = 0; m < N_RADIX; m++)
-            q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff[m], q1[m]), q2[m]), data4);
-        data4 = _mm256_loadu_pd(data_ptr);
-        data_ptr += 4;
-        #pragma GCC unroll 8
-        for (int m = 0; m < N_RADIX; m++)
-            q2[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff[m], q0[m]), q1[m]), data4);
-        data4 = _mm256_loadu_pd(data_ptr);
-        data_ptr += 4;
-        #pragma GCC unroll 8
-        for (int m = 0; m < N_RADIX; m++)
-            q1[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff[m], q2[m]), q0[m]), data4);
-    }
-    for (; i < data_len; i += 4)
-    {
-        // zero-pad values in range data_len/4*4:data_len
-        data4 = _mm256_setzero_pd();
-        for (long int j = 0; j < MIN(4, data_len-i); j++)
-            data4[j] = data[i+j];
-        #pragma GCC unroll 8
-        for (int m = 0; m < N_RADIX; m++)
-        {
-            q0[m] = _mm256_add_pd(_mm256_sub_pd(_mm256_mul_pd(
-                coeff[m], q1[m]), q2[m]), data4);
-            q2[m] = q1[m];
-            q1[m] = q0[m];
-        }
-    }
-    double iq[8];
-    for (int m = 0; m < N_RADIX; m++)
-    {
-        iq[0] = q1[m][0]*cw[m]-q2[m][0];
-        iq[1] = q1[m][0]*sw[m];
-        iq[2] = q1[m][1]*cw[m]-q2[m][1];
-        iq[3] = q1[m][1]*sw[m];
-        iq[4] = q1[m][2]*cw[m]-q2[m][2];
-        iq[5] = q1[m][2]*sw[m];
-        iq[6] = q1[m][3]*cw[m]-q2[m][3];
-        iq[7] = q1[m][3]*sw[m];
-
-        goertzel_cx(iq, 4, k[m]*4/data_len, out+2*m);
-
-        long int n_pad = i-data_len;
-        omega = -2.0*M_PI*(4+n_pad)*k[m]/data_len;
-        sw[m] = sin(omega);
-        cw[m] = cos(omega);
-
-        double i_t = out[2*m+0];
-        // (cw+j*sw)*(i1+j*q1)
-        out[2*m+0] = i_t*cw[m]-out[2*m+1]*sw[m];
-        out[2*m+1] = i_t*sw[m]+out[2*m+1]*cw[m];
-    }
-}
+#define GOERTZEL_AVX goertzel_rad4x2_avx
+#include "dsp_rad4x_avx.c"
+#undef GOERTZEL_AVX
 #undef N_RADIX
 
 void goertzel_rad4x2_test(double *data, long data_len, double k, double *out)

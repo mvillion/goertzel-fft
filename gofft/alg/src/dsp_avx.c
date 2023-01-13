@@ -1,3 +1,4 @@
+// code for radix-RADIX with single frequency
 void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
 {
     double omega = 2.0*M_PI*RADIX*k/data_len;

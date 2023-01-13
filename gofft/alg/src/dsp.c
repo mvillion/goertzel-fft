@@ -168,22 +168,31 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
     double sw = sin(omega);
     double cw = cos(omega);
     __m128d coeff = _mm_set1_pd(2.0*cw);
+    __m128d data2;
 
     __m128d q0 = _mm_setzero_pd(); // both radix-2 state variables
     __m128d q1 = _mm_setzero_pd();
     __m128d q2 = _mm_setzero_pd();
-    __m128d *data_pd = (__m128d *)data;
+    double *data_ptr = data;
 
     long int i;
     for (i = 0; i < data_len/6*6; i += 6)
     {
-        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), *(data_pd++));
-        q2 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q0), q1), *(data_pd++));
-        q1 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q2), q0), *(data_pd++));
+        data2 = _mm_loadu_pd(data_ptr);
+        data_ptr += 2;
+        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), data2);
+        data2 = _mm_loadu_pd(data_ptr);
+        data_ptr += 2;
+        q2 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q0), q1), data2);
+        data2 = _mm_loadu_pd(data_ptr);
+        data_ptr += 2;
+        q1 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q2), q0), data2);
     }
     for (; i < data_len/2*2; i += 2)
     {
-        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), *(data_pd++));
+        data2 = _mm_loadu_pd(data_ptr);
+        data_ptr += 2;
+        q0 = _mm_add_pd(_mm_sub_pd(_mm_mul_pd(coeff, q1), q2), data2);
         q2 = q1;
         q2 = q1;
         q1 = q0;
@@ -191,8 +200,8 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
     }
     for (; i < data_len; i++)
     {
-        __m128d data_i = _mm_set1_pd(data[i]);
-        q0 = _mm_add_sd(_mm_sub_sd(_mm_mul_sd(coeff, q1), q2), data_i);
+        data2 = _mm_set1_pd(data[i]);
+        q0 = _mm_add_sd(_mm_sub_sd(_mm_mul_sd(coeff, q1), q2), data2);
         q2 = _mm_move_sd(q2, q1);
         q1 = _mm_move_sd(q1, q0);
     }

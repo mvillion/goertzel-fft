@@ -2,6 +2,7 @@
 import numpy as np
 import sys
 
+from cpuinfo import get_cpu_info
 from enum import Enum
 from gofft_directory import dsp_ext
 from pathlib import Path
@@ -241,14 +242,16 @@ def bench_and_plot(
     plt.xlabel("length (samples)")
     plt.title(title_str)
     plt.savefig("%s_error.png" % prefix, bbox_inches="tight")
-    plt.show()
-    plt.pause(5)
+    # plt.show()
+    plt.pause(1)
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("dummy exit")
         sys.exit()
+
+    cpu_flags = get_cpu_info()["flags"]
 
     len_range = np.arange(24, 25)
     cost, error = bench_range(BenchType, len_range, n_test=2)
@@ -283,6 +286,21 @@ if __name__ == '__main__':
     bench_and_plot(
         bench_list, len_range, media_path, "radix", title_str, n_test=n_test)
 
+    title_str = "More radix"
+    bench_list = [
+        "fft",
+        "goertzel",
+        "goertzel_rad4_avx",
+        "goertzel_rad8_avx",
+        "goertzel_rad12_avx",
+        "goertzel_rad16_avx",
+        "goertzel_rad20_avx",
+        "goertzel_rad24_avx",
+    ]
+    bench_and_plot(
+        bench_list, len_range, media_path, "more_radix", title_str,
+        n_test=n_test)
+
     title_str = "Influence of unrolling"
     bench_list = [
         "goertzel",
@@ -294,3 +312,17 @@ if __name__ == '__main__':
     ]
     bench_and_plot(
         bench_list, len_range, media_path, "unroll", title_str, n_test=n_test)
+
+    if "fma3" in cpu_flags:
+        title_str = "AVX vs FMA3"
+        bench_list = [
+            "goertzel",
+            "goertzel_rad4_avx",
+            "goertzel_rad8_avx",
+            "goertzel_rad20_avx",
+            "goertzel_rad4_fma",
+            "goertzel_rad8_fma",
+            "goertzel_rad20_fma",
+        ]
+        bench_and_plot(
+            bench_list, len_range, media_path, "fma3", title_str, n_test=n_test)

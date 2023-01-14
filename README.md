@@ -157,17 +157,50 @@ With a radix-4 unrolled 2 times (goertzel_rad4u2_avx), the code is:
 
 The code looks indentical but using 4 registers instead of 7.
 
+For a slow processor:
+
 ![Alt text](media/unroll_cost_db.png?raw=true "Influence of loop unrolling (cost)")
 
-Loop unrolling have no influence. Branch prediction is likely efficient and correctly predicts that this core loop is looping.
+and a faster one:
 
-Radix-8 is still faster with identicaly operations!
+![Alt text](media/2950x/unroll_cost_db.png?raw=true "Influence of loop unrolling (cost) AMD 2950x")
+
+Loop unrolling has no influence. Branch prediction is likely efficient and correctly predicts that this core loop is ... looping.
+
+Radix-8 is still faster with identical operations!
 PC processors are using out-of-order execution and as radix-8 instructions from the two sets of avx registers are not dependent on each other, many operations can be executed in a single cycle. This also explains why non-AVX code could execute as fast as AVX code.
 
-### influence of the processor
+### More radix: longer radix
 On a slow AMD processor, higher order radix are faster up to 8.
 radix-12 is not faster than 8.
-As a register is used for the 2*cos factor and 3 registers are needed for 4 values radix-20 is the limit (1+3*5) to avoid using stack memory access.
+
+![Alt text](media/more_radix_cost_db.png?raw=true "Longer radix (cost)")
+
+As a register is used for the 2 x cos factor and 3 registers are needed for 4 values radix-20 is the limit (1+3x5) to avoid using stack memory access.
+This can be confirmed on a fast processor:
+
+![Alt text](media/2950x/more_radix_cost_db.png?raw=true "Longer radix (cost) AMD 2950x")
+
+### Use of FMA3 instructions
+
+The core loop using FMA3 instructions is shorter:
+
+    /-> vfmsub231pd %ymm3,%ymm1,%ymm0
+    |   vaddpd (%rcx,%r13,8),%ymm0,%ymm2
+    |   vmovupd 0x20(%rcx,%r13,8),%ymm0
+    |   vfmsub231pd %ymm2,%ymm3,%ymm1
+    |   vaddpd %ymm1,%ymm0,%ymm0
+    |   vfmsub231pd %ymm0,%ymm3,%ymm2
+    |   vaddpd 0x40(%rcx,%r13,8),%ymm2,%ymm1
+    |   add    $0xc,%r13
+    |   cmp    %rax,%r13
+    \-- jl     <goertzel_rad4_fma+0xe0>
+
+AVX used 12 instructions, FMA2 needs only 10 (could be 9?).
+
+![Alt text](media/2950x/fma3_cost_db.png?raw=true "AVX vs FMA3 (cost) AMD 2950x")
+
+FMA loops are a little faster for shorter lengths.
 
 ## Second problem: If Goertzel is used to compute all frequencies, how much slower Goertzel is?
 This problem does not fully make sense.

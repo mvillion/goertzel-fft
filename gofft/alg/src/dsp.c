@@ -318,7 +318,6 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
     out[1] = i_t*sw+out[1]*cw;
 }
 
-#define UNROLL_FACTOR 1
 #define RADIX 4
 #define GOERTZEL_AVX goertzel_rad4_avx
 #include "dsp_avx.c"
@@ -377,12 +376,11 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
 #undef RADIX
 
 #pragma GCC pop_options //-----------------------------------------------------
-#undef UNROLL_FACTOR
 
 #define UNROLL_FACTOR 2
 #define RADIX 4
 #define GOERTZEL_AVX goertzel_rad4u2_avx
-#include "dsp_avx.c"
+#include "dsp_avx_unroll.c"
 #undef GOERTZEL_AVX
 #undef RADIX
 #undef UNROLL_FACTOR
@@ -390,7 +388,7 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
 #define UNROLL_FACTOR 4
 #define RADIX 4
 #define GOERTZEL_AVX goertzel_rad4u4_avx
-#include "dsp_avx.c"
+#include "dsp_avx_unroll.c"
 #undef GOERTZEL_AVX
 #undef RADIX
 #undef UNROLL_FACTOR

@@ -146,98 +146,75 @@ static PyMethodDef methods[] = {
         "Goertzel algorithm." // doc string
     },
     {
-        "goertzel_cx", dsp_goertzel_rad2,
-        METH_VARARGS,
-        "Goertzel with complex input algorithm."
-    },
-    {
-        "goertzel_rad2", dsp_goertzel_rad2,
-        METH_VARARGS,
+        "goertzel_rad2", dsp_goertzel_rad2, METH_VARARGS,
         "Goertzel radix-2 algorithm."
     },
     {
-        "goertzel_rad2_sse", dsp_goertzel_rad2_sse,
-        METH_VARARGS,
+        "goertzel_rad2_sse", dsp_goertzel_rad2_sse, METH_VARARGS,
         "Goertzel radix-2 algorithm using SSE instructions."
     },
     {
-        "goertzel_rad4", dsp_goertzel_rad4,
-        METH_VARARGS,
+        "goertzel_rad4", dsp_goertzel_rad4, METH_VARARGS,
         "Goertzel radix-4 algorithm."
     },
     {
-        "goertzel_rad4_avx", dsp_goertzel_rad4_avx,
-        METH_VARARGS,
+        "goertzel_rad4_avx", dsp_goertzel_rad4_avx, METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad4u2_avx", dsp_goertzel_rad4u2_avx,
-        METH_VARARGS,
+        "goertzel_rad4u2_avx", dsp_goertzel_rad4u2_avx, METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions (unrolled 2 times)."
     },
     {
-        "goertzel_rad4u4_avx", dsp_goertzel_rad4u4_avx,
-        METH_VARARGS,
+        "goertzel_rad4u4_avx", dsp_goertzel_rad4u4_avx, METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions (unrolled 4 times)."
     },
     {
-        "goertzel_rad8_avx", dsp_goertzel_rad8_avx,
-        METH_VARARGS,
+        "goertzel_rad8_avx", dsp_goertzel_rad8_avx, METH_VARARGS,
         "Goertzel radix-8 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad12_avx", dsp_goertzel_rad12_avx,
-        METH_VARARGS,
+        "goertzel_rad12_avx", dsp_goertzel_rad12_avx, METH_VARARGS,
         "Goertzel radix-12 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad16_avx", dsp_goertzel_rad16_avx,
-        METH_VARARGS,
+        "goertzel_rad16_avx", dsp_goertzel_rad16_avx, METH_VARARGS,
         "Goertzel radix-16 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad20_avx", dsp_goertzel_rad20_avx,
-        METH_VARARGS,
+        "goertzel_rad20_avx", dsp_goertzel_rad20_avx, METH_VARARGS,
         "Goertzel radix-20 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad24_avx", dsp_goertzel_rad24_avx,
-        METH_VARARGS,
+        "goertzel_rad24_avx", dsp_goertzel_rad24_avx, METH_VARARGS,
         "Goertzel radix-24 algorithm using AVX instructions."
     },
     {
-        "goertzel_rad4x2_test", dsp_goertzel_rad4x2_test,
-        METH_VARARGS,
+        "goertzel_rad4x2_test", dsp_goertzel_rad4x2_test, METH_VARARGS,
         "Goertzel radix-4 algorithm using AVX instructions on 2 frequencies."
     },
     {
-        "goertzel_rad4_fma", dsp_goertzel_rad4_fma,
-        METH_VARARGS,
+        "goertzel_rad4_fma", dsp_goertzel_rad4_fma, METH_VARARGS,
         "Goertzel radix-4 algorithm using FMA instructions."
     },
     {
-        "goertzel_rad8_fma", dsp_goertzel_rad8_fma,
-        METH_VARARGS,
+        "goertzel_rad8_fma", dsp_goertzel_rad8_fma, METH_VARARGS,
         "Goertzel radix-8 algorithm using FMA instructions."
     },
     {
-        "goertzel_rad20_fma", dsp_goertzel_rad20_fma,
-        METH_VARARGS,
+        "goertzel_rad20_fma", dsp_goertzel_rad20_fma, METH_VARARGS,
         "Goertzel radix-20 algorithm using FMA instructions."
     },
     {
-        "goertzel_dft", dsp_goertzel_dft,
-        METH_VARARGS,
+        "goertzel_dft", dsp_goertzel_dft, METH_VARARGS,
         "Goertzel algorithm to compute dft."
     },
     {
-        "goertzel_dft_rad2", dsp_goertzel_dft_rad2,
-        METH_VARARGS,
+        "goertzel_dft_rad2", dsp_goertzel_dft_rad2, METH_VARARGS,
         "Goertzel radix-2 algorithm to compute dft."
     },
     {
-        "goertzel_dft_rad2_sse", dsp_goertzel_dft_rad2_sse,
-        METH_VARARGS,
+        "goertzel_dft_rad2_sse", dsp_goertzel_dft_rad2_sse, METH_VARARGS,
         "Goertzel radix-2 algorithm using SSE instructions to compute dft."
     },
     {NULL, NULL, 0, NULL} // sentinel

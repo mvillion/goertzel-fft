@@ -176,17 +176,16 @@ def bench_range(BenchType, len_range, n_test=10000):
     return cost, error
 
 
-def bench_and_plot(
-        bench_list, len_range, media_path, plot_prefix, title_str, n_test=100):
-
-    BenchType = Enum("BenchType", bench_list, start=0)
-    cost, error = bench_range(BenchType, len_range, n_test=n_test)
+def plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, plot_prefix,
+        title_str):
 
     prefix = "/".join([str(media_path), plot_prefix])
     from matplotlib import pyplot as plt
     plt.close("all")
     plt.figure(1)
-    for k in BenchType:
+    for name in bench_list:
+        k = BenchType[name]
         plt.plot(len_range, 10*np.log10(cost[k.value, :]), label=k.name)
     plt.legend()
     plt.ylabel("time (dBs)")
@@ -195,7 +194,8 @@ def bench_and_plot(
     plt.savefig("%s_cost_db.png" % prefix, bbox_inches="tight")
 
     plt.figure(2)
-    for k in BenchType:
+    for name in bench_list:
+        k = BenchType[name]
         plt.plot(len_range, cost[k.value, :], label=k.name)
     plt.legend()
     plt.ylabel("time (s)")
@@ -204,7 +204,8 @@ def bench_and_plot(
     plt.savefig("%s_cost.png" % prefix, bbox_inches="tight")
 
     plt.figure(3)
-    for k in BenchType:
+    for name in bench_list:
+        k = BenchType[name]
         if np.isnan(error[k.value, :]).all():
             plt.plot(np.arange(1), np.arange(1), label="%s vs fft" % k.name)
             continue
@@ -253,16 +254,50 @@ if __name__ == '__main__':
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
 
+    bench_list = [
+        "dft",
+        "fft",
+        "goertzel",
+        "goertzel_rad2_py",
+        "goertzel_radix_py",
+        "goertzel_rad8_py",
+        "goertzel_rad2",
+        "goertzel_rad2_sse",
+        "goertzel_rad4",
+        "goertzel_rad4_avx",
+        "goertzel_rad8_avx",
+        "goertzel_rad12_avx",
+        "goertzel_rad16_avx",
+        "goertzel_rad20_avx",
+        "goertzel_rad24_avx",
+        "goertzel_rad4u2_avx",
+        "goertzel_rad4u4_avx",
+        "goertzel_rad4x2_test",
+        # "goertzel_dft",
+        # "goertzel_dft_rad2",
+        # "goertzel_dft_rad2_sse",
+    ]
+    if "fma3" in cpu_flags:
+        bench_list += [
+            "goertzel_rad4_fma",
+            "goertzel_rad8_fma",
+            "goertzel_rad20_fma",
+        ]
+    BenchType = Enum("BenchType", bench_list, start=0)
+    cost, error = bench_range(BenchType, len_range, n_test=n_test)
+
     title_str = "archived"
     bench_list = [
         "fft", "goertzel_rad2_py", "goertzel_radix_py", "goertzel_rad8_py"]
-    bench_and_plot(
-        bench_list, len_range, media_path, "archive", title_str, n_test=n_test)
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "archive",
+        title_str)
 
     title_str = "Goertzel vs DFT vs FFT"
     bench_list = ["dft", "fft", "goertzel"]
-    bench_and_plot(
-        bench_list, len_range, media_path, "intro", title_str, n_test=n_test)
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "intro",
+        title_str)
 
     title_str = "Faster Goertzel w/ radix"
     bench_list = [
@@ -274,8 +309,9 @@ if __name__ == '__main__':
         "goertzel_rad4_avx",
         "goertzel_rad8_avx",
     ]
-    bench_and_plot(
-        bench_list, len_range, media_path, "radix", title_str, n_test=n_test)
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "radix",
+        title_str)
 
     title_str = "More radix"
     bench_list = [
@@ -288,9 +324,9 @@ if __name__ == '__main__':
         "goertzel_rad20_avx",
         "goertzel_rad24_avx",
     ]
-    bench_and_plot(
-        bench_list, len_range, media_path, "more_radix", title_str,
-        n_test=n_test)
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "more_radix",
+        title_str)
 
     title_str = "Influence of unrolling"
     bench_list = [
@@ -301,8 +337,9 @@ if __name__ == '__main__':
         "goertzel_rad8_avx",
         "goertzel_rad16_avx",
     ]
-    bench_and_plot(
-        bench_list, len_range, media_path, "unroll", title_str, n_test=n_test)
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "unroll",
+        title_str)
 
     if "fma3" in cpu_flags:
         title_str = "AVX vs FMA3"
@@ -315,5 +352,6 @@ if __name__ == '__main__':
             "goertzel_rad8_fma",
             "goertzel_rad20_fma",
         ]
-        bench_and_plot(
-            bench_list, len_range, media_path, "fma3", title_str, n_test=n_test)
+        plot_bench(
+            BenchType, len_range, cost, error, bench_list, media_path, "fma3",
+            title_str)

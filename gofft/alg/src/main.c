@@ -95,48 +95,37 @@ static PyObject* dsp_goertzel_dft_template(
     return output;
 }
 
-static PyObject* dsp_goertzel(PyObject* self, PyObject* args)
-{
-    return dsp_goertzel_template(self, args, &goertzel, &goertzel_cx);
-}
-
-#define DEF_DSP(name) \
-static PyObject* dsp_goertzel_ ## name (PyObject* self, PyObject* args) \
+#define DEF_DSP(name, fun_cx) \
+static PyObject* dsp_ ## name (PyObject* self, PyObject* args) \
 { \
-    return dsp_goertzel_template(self, args, &goertzel_ ## name, NULL); \
+    return dsp_goertzel_template(self, args, &name, fun_cx); \
 }
-DEF_DSP(rad2)
-DEF_DSP(rad2_sse)
-DEF_DSP(rad4)
-DEF_DSP(rad4_avx)
-DEF_DSP(rad4u2_avx)
-DEF_DSP(rad4u4_avx)
-DEF_DSP(rad8_avx)
-DEF_DSP(rad12_avx)
-DEF_DSP(rad16_avx)
-DEF_DSP(rad20_avx)
-DEF_DSP(rad24_avx)
-DEF_DSP(rad4x2_test)
-DEF_DSP(rad4_fma)
-DEF_DSP(rad8_fma)
-DEF_DSP(rad20_fma)
+DEF_DSP(goertzel, &goertzel_cx)
+DEF_DSP(goertzel_rad2, NULL)
+DEF_DSP(goertzel_rad2_sse, NULL)
+DEF_DSP(goertzel_rad4, NULL)
+DEF_DSP(goertzel_rad4_avx, NULL)
+DEF_DSP(goertzel_rad4u2_avx, NULL)
+DEF_DSP(goertzel_rad4u4_avx, NULL)
+DEF_DSP(goertzel_rad8_avx, NULL)
+DEF_DSP(goertzel_rad12_avx, NULL)
+DEF_DSP(goertzel_rad16_avx, NULL)
+DEF_DSP(goertzel_rad20_avx, NULL)
+DEF_DSP(goertzel_rad24_avx, NULL)
+DEF_DSP(goertzel_rad4x2_test, NULL)
+DEF_DSP(goertzel_rad4_fma, NULL)
+DEF_DSP(goertzel_rad8_fma, NULL)
+DEF_DSP(goertzel_rad20_fma, NULL)
 
 
-static PyObject* dsp_goertzel_dft(PyObject* self, PyObject* args)
-{
-    return dsp_goertzel_dft_template(
-        self, args, &goertzel_dft, &goertzel_dft_cx);
+#define DEF_DSP_DFT(name, fun_cx) \
+static PyObject* dsp_ ## name (PyObject* self, PyObject* args) \
+{ \
+    return dsp_goertzel_dft_template(self, args, &name, fun_cx); \
 }
-
-static PyObject* dsp_goertzel_dft_rad2(PyObject* self, PyObject* args)
-{
-    return dsp_goertzel_dft_template(self, args, &goertzel_dft_rad2, NULL);
-}
-
-static PyObject* dsp_goertzel_dft_rad2_sse(PyObject* self, PyObject* args)
-{
-    return dsp_goertzel_dft_template(self, args, &goertzel_dft_rad2_sse, NULL);
-}
+DEF_DSP_DFT(goertzel_dft, &goertzel_dft_cx)
+DEF_DSP_DFT(goertzel_dft_rad2, NULL)
+DEF_DSP_DFT(goertzel_dft_rad2_sse, NULL)
 
 /* Set up the methods table */
 static PyMethodDef methods[] = {

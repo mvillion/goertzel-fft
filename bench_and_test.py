@@ -8,34 +8,6 @@ from gofft_directory import dsp_ext
 from pathlib import Path
 from time import time
 
-bench_list = [
-    "dft",
-    "fft",
-    "goertzel",
-    # "goertzel_rad2_py",
-    # "goertzel_rad2",
-    # "goertzel_rad2_sse",
-    # "goertzel_rad4_py",
-    # "goertzel_rad4",
-    "goertzel_rad4_avx",
-    # "goertzel_rad4u2_avx",
-    # "goertzel_rad4u4_avx",
-    "goertzel_rad4x2_test",
-    # "goertzel_rad8_py",
-    "goertzel_rad8_avx",
-    # "goertzel_rad12_avx",
-    # "goertzel_rad16_avx",
-    # "goertzel_rad20_avx",
-    # "goertzel_rad24_avx",
-    # "goertzel_rad4_fma",
-    # "goertzel_rad8_fma",
-    # "goertzel_rad20_fma",
-    # "goertzel_dft",
-    # "goertzel_dft_rad2",
-    # "goertzel_dft_rad2_sse",
-]
-BenchType = Enum("BenchType", bench_list, start=0)
-
 
 def goertzel_rad2_py(data, k):
     # if data_len = 9, data_len0 = 5 and data_len1 = 4
@@ -253,6 +225,19 @@ if __name__ == '__main__':
 
     cpu_flags = get_cpu_info()["flags"]
 
+    # short test for debug
+    bench_list = [
+        "dft",
+        "fft",
+        "goertzel",
+        "goertzel_rad4_avx",
+        "goertzel_rad4x2_test",
+        "goertzel_rad8_avx",
+        # "goertzel_dft",
+        # "goertzel_dft_rad2",
+        # "goertzel_dft_rad2_sse",
+    ]
+    BenchType = Enum("BenchType", bench_list, start=0)
     len_range = np.arange(24, 25)
     cost, error = bench_range(BenchType, len_range, n_test=2)
     for m, data_len in enumerate(len_range):
@@ -267,6 +252,12 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
+
+    title_str = "archived"
+    bench_list = [
+        "fft", "goertzel_rad2_py", "goertzel_radix_py", "goertzel_rad8_py"]
+    bench_and_plot(
+        bench_list, len_range, media_path, "archive", title_str, n_test=n_test)
 
     title_str = "Goertzel vs DFT vs FFT"
     bench_list = ["dft", "fft", "goertzel"]

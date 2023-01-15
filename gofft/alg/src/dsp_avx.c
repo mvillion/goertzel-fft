@@ -62,14 +62,6 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
     double iq[RADIX*2];
     for (int m = 0; m < RADIX/4; m++)
     {
-//         iq[8*m+0] = q1[m][0]*cw-q2[m][0];
-//         iq[8*m+1] = q1[m][0]*sw;
-//         iq[8*m+2] = q1[m][1]*cw-q2[m][1];
-//         iq[8*m+3] = q1[m][1]*sw;
-//         iq[8*m+4] = q1[m][2]*cw-q2[m][2];
-//         iq[8*m+5] = q1[m][2]*sw;
-//         iq[8*m+6] = q1[m][3]*cw-q2[m][3];
-//         iq[8*m+7] = q1[m][3]*sw;
         __m256d datai4 = _mm256_mul_pd(q1[m], _mm256_set1_pd(cw));
         datai4 = _mm256_sub_pd(datai4, q2[m]);
         __m256d dataq4 = _mm256_mul_pd(q1[m], _mm256_set1_pd(sw));

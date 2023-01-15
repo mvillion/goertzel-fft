@@ -59,28 +59,19 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
             q2[m] = q1[m];
             q1[m] = q0[m];
         }
-    double iq_i[RADIX/2*2]; // iq output from i input (even values)
-    double iq_q[RADIX/2*2]; // iq output from q input (odd values)
+    double iq[RADIX/2*2];
     for (int m = 0; m < RADIX/4; m++)
     {
         __m256d datai4 = _mm256_mul_pd(q1[m], _mm256_set1_pd(cw));
         datai4 = _mm256_sub_pd(datai4, q2[m]);
         __m256d dataq4 = _mm256_mul_pd(q1[m], _mm256_set1_pd(sw));
-        iq_i[4*m+0] = datai4[0];
-        iq_i[4*m+1] = dataq4[0];
-        iq_i[4*m+2] = datai4[2];
-        iq_i[4*m+3] = dataq4[2];
-        iq_q[4*m+0] = datai4[1];
-        iq_q[4*m+1] = dataq4[1];
-        iq_q[4*m+2] = datai4[3];
-        iq_q[4*m+3] = dataq4[3];
+        iq[4*m+0] = datai4[0]-dataq4[1];
+        iq[4*m+1] = dataq4[0]+datai4[1];
+        iq[4*m+2] = datai4[2]-dataq4[3];
+        iq[4*m+3] = dataq4[2]+datai4[3];
     }
 
-    goertzel_cx(iq_i, RADIX/2, k*RADIX/2/data_len, out);
-    double out2[2];
-    goertzel_cx(iq_q, RADIX/2, k*RADIX/2/data_len, out2);
-    out[0] -= out2[1];
-    out[1] += out2[0];
+    goertzel_cx(iq, RADIX/2, k*RADIX/2/data_len, out);
 
     long int n_pad = i-data_len*2;
     omega = -2.0*M_PI*(RADIX+n_pad)/2*k/data_len;

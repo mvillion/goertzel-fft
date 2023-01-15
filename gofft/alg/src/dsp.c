@@ -354,6 +354,25 @@ void goertzel_rad4(double *data, long data_len, double k, double *out)
 #undef GOERTZEL_AVX
 #undef RADIX
 
+//------------------------------------------------------------------------------
+#define RADIX 8
+#define GOERTZEL_AVX goertzel_rad4_cx_avx
+#include "dsp_avx_cx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 16
+#define GOERTZEL_AVX goertzel_rad8_cx_avx
+#include "dsp_avx_cx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 24
+#define GOERTZEL_AVX goertzel_rad12_cx_avx
+#include "dsp_avx_cx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
 #pragma GCC push_options //----------------------------------------------------
 #pragma GCC target("fma")
 

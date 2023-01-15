@@ -99,9 +99,11 @@ def goertzel_rad8_py(data, k):
     return goertzel_radix_py(data, k, radix=8)
 
 
-def bench_goertzel(BenchType, data_len, n_test=10000):
+def bench_goertzel(BenchType, data_len, cx=False, n_test=10000):
     rng = np.random.Generator(np.random.SFC64())
     in_data = rng.random((n_test, data_len), np.float64)
+    if cx:
+        in_data = in_data+1j*rng.random((n_test, data_len), np.float64)
 
     cost = np.empty(len(BenchType))
     error = np.empty(len(BenchType))
@@ -165,13 +167,13 @@ def bench_goertzel(BenchType, data_len, n_test=10000):
     return cost, error
 
 
-def bench_range(BenchType, len_range, n_test=10000):
+def bench_range(BenchType, len_range, cx=False, n_test=10000):
     cost = np.empty((len(BenchType), len(len_range)))
     error = np.empty((len(BenchType), len(len_range)))
     for i, data_len in enumerate(len_range):
         print("data_len %d" % data_len)
         cost[:, i], error[:, i] = bench_goertzel(
-            BenchType, data_len, n_test=n_test)
+            BenchType, data_len, cx=cx, n_test=n_test)
 
     return cost, error
 
@@ -228,19 +230,19 @@ if __name__ == '__main__':
 
     # short test for debug
     bench_list = [
-        "dft",
+        # "dft",
         "fft",
-        "goertzel",
+        # "goertzel",
         "goertzel_rad4_avx",
-        "goertzel_rad4x2_test",
-        "goertzel_rad8_avx",
+        # "goertzel_rad4x2_test",
+        # "goertzel_rad8_avx",
         # "goertzel_dft",
         # "goertzel_dft_rad2",
         # "goertzel_dft_rad2_sse",
     ]
     BenchType = Enum("BenchType", bench_list, start=0)
     len_range = np.arange(24, 25)
-    cost, error = bench_range(BenchType, len_range, n_test=2)
+    cost, error = bench_range(BenchType, len_range, cx=True, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
         print(", ".join(cost_str))
@@ -254,6 +256,23 @@ if __name__ == '__main__':
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
 
+    # complex-value tests-------------------------------------------------------
+    bench_list = [
+        "fft",
+        "goertzel",
+        "goertzel_rad4_avx",
+        "goertzel_rad8_avx",
+        "goertzel_rad12_avx",
+    ]
+    BenchType = Enum("BenchType", bench_list, start=0)
+    cost, error = bench_range(BenchType, len_range, cx=True, n_test=n_test)
+
+    title_str = "complex input"
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "cx",
+        title_str)
+
+    # real-value tests----------------------------------------------------------
     bench_list = [
         "dft",
         "fft",

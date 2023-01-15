@@ -2,9 +2,11 @@
 #include <math.h>
 
 static PyObject* dsp_goertzel_template(
-    PyObject* self, PyObject* args, goertzel_fun_t *fun, goertzel_fun_t *fun_cx)
+    PyObject* self, PyObject* args, goertzel_fun_t *fun, goertzel_fun_t *fun_cx,
+    goertzelf_fun_t *funf, goertzelf_fun_t *funf_cx)
 {
     PyArrayObject *in_data;
+    PyObject *output;
     double k;
 
     if (!PyArg_ParseTuple(args, "O!d", &PyArray_Type, &in_data, &k))
@@ -14,7 +16,6 @@ static PyObject* dsp_goertzel_template(
     // Ensure the input array is contiguous.
     // PyArray_GETCONTIGUOUS will increase the reference count.
     in_data = PyArray_GETCONTIGUOUS(in_data);
-    double *data = (double *)PyArray_DATA(in_data);
 
     // create output dimensions
     // last axis is removed, replaced by complex data i&q
@@ -26,23 +27,47 @@ static PyObject* dsp_goertzel_template(
     for (int k = 0; k < n_dim-1; k++)
         n_data *= out_dim[k];
 
-    PyObject *output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX128);
-    double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
-
-    if (PyArray_ISCOMPLEX(in_data) && fun_cx != NULL)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            fun_cx(data, data_len, k, out_res);
-            data += data_len*2;
-            out_res += 2;
-        }
-    else if (!PyArray_ISCOMPLEX(in_data) && fun != NULL)
-        for (npy_intp i_data = 0; i_data < n_data; i_data++)
-        {
-            fun(data, data_len, k, out_res);
-            data += data_len;
-            out_res += 2;
-        }
+    int typenum = PyArray_TYPE(in_data);
+    if (typenum == NPY_FLOAT64 || typenum == NPY_COMPLEX128)
+    {
+        double *data = (double *)PyArray_DATA(in_data);
+        output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX128);
+        double *out_res = (double *)PyArray_DATA((PyArrayObject *)output);
+        if (typenum == NPY_FLOAT64 && fun != NULL)
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                fun(data, data_len, k, out_res);
+                data += data_len;
+                out_res += 2;
+            }
+        else if (typenum == NPY_COMPLEX128 && fun_cx != NULL)
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                fun_cx(data, data_len, k, out_res);
+                data += data_len*2;
+                out_res += 2;
+            }
+    }
+    else //if (typenum == NPY_FLOAT32 || typenum == NPY_COMPLEX64)
+    {
+        float *data = (float *)PyArray_DATA(in_data);
+        output = PyArray_SimpleNew(n_dim-1, out_dim, NPY_COMPLEX64);
+        float *out_res = (float *)PyArray_DATA((PyArrayObject *)output);
+        if (typenum == NPY_FLOAT32 && fun != NULL)
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                funf(data, data_len, k, out_res);
+                data += data_len;
+                out_res += 2;
+            }
+        else if (typenum == NPY_COMPLEX64 && fun_cx != NULL)
+            for (npy_intp i_data = 0; i_data < n_data; i_data++)
+            {
+                funf_cx(data, data_len, k, out_res);
+                data += data_len*2;
+                out_res += 2;
+            }
+    }
 
     // Decrease the reference count of ap.
     Py_DECREF(in_data);
@@ -95,27 +120,27 @@ static PyObject* dsp_goertzel_dft_template(
     return output;
 }
 
-#define DEF_DSP(name, fun_cx) \
+#define DEF_DSP(name, fun_cx, funf, funf_cx) \
 static PyObject* dsp_ ## name (PyObject* self, PyObject* args) \
 { \
-    return dsp_goertzel_template(self, args, &name, fun_cx); \
+    return dsp_goertzel_template(self, args, &name, fun_cx, funf, funf_cx); \
 }
-DEF_DSP(goertzel, &goertzel_cx)
-DEF_DSP(goertzel_rad2, NULL)
-DEF_DSP(goertzel_rad2_sse, NULL)
-DEF_DSP(goertzel_rad4, NULL)
-DEF_DSP(goertzel_rad4_avx, &goertzel_rad4_cx_avx)
-DEF_DSP(goertzel_rad4u2_avx, NULL)
-DEF_DSP(goertzel_rad4u4_avx, NULL)
-DEF_DSP(goertzel_rad8_avx, &goertzel_rad8_cx_avx)
-DEF_DSP(goertzel_rad12_avx, &goertzel_rad12_cx_avx)
-DEF_DSP(goertzel_rad16_avx, NULL)
-DEF_DSP(goertzel_rad20_avx, NULL)
-DEF_DSP(goertzel_rad24_avx, NULL)
-DEF_DSP(goertzel_rad4x2_test, NULL)
-DEF_DSP(goertzel_rad4_fma, NULL)
-DEF_DSP(goertzel_rad8_fma, NULL)
-DEF_DSP(goertzel_rad20_fma, NULL)
+DEF_DSP(goertzel, &goertzel_cx, &goertzelf, &goertzelf_cx)
+DEF_DSP(goertzel_rad2, NULL, &goertzelf_rad2, NULL)
+DEF_DSP(goertzel_rad2_sse, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad4, NULL, &goertzelf_rad4, NULL)
+DEF_DSP(goertzel_rad4_avx, &goertzel_rad4_cx_avx, NULL, NULL)
+DEF_DSP(goertzel_rad4u2_avx, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad4u4_avx, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad8_avx, &goertzel_rad8_cx_avx, NULL, NULL)
+DEF_DSP(goertzel_rad12_avx, &goertzel_rad12_cx_avx, NULL, NULL)
+DEF_DSP(goertzel_rad16_avx, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad20_avx, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad24_avx, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad4x2_test, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad4_fma, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad8_fma, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad20_fma, NULL, NULL, NULL)
 
 
 #define DEF_DSP_DFT(name, fun_cx) \

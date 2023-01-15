@@ -4,9 +4,10 @@
 typedef void goertzel_fun_t(
     double *data, long data_len, double k, double *out);
 
-// Goertzel algorithm (for single tone detection)
-goertzel_fun_t goertzel;
+typedef void goertzelf_fun_t(
+    float *data, long data_len, float k, float *out);
 
+// Goertzel algorithm (for single tone detection)
 goertzel_fun_t goertzel;
 goertzel_fun_t goertzel_cx;
 goertzel_fun_t goertzel_rad2;
@@ -32,3 +33,8 @@ goertzel_fun_t goertzel_dft;
 goertzel_fun_t goertzel_dft_cx;
 goertzel_fun_t goertzel_dft_rad2;
 goertzel_fun_t goertzel_dft_rad2_sse;
+
+goertzelf_fun_t goertzelf;
+goertzelf_fun_t goertzelf_cx;
+goertzelf_fun_t goertzelf_rad2;
+goertzelf_fun_t goertzelf_rad4;

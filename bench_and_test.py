@@ -145,20 +145,27 @@ def bench_goertzel(BenchType, data_len, cx=False, n_test=10000):
         error[etype.value] = (out-out_fft).std(axis=-1).max()
 
     for etype in BenchType:
-        if "_dft" in etype.name:
+        name = etype.name
+        if "_dft" in name or name in ["dft", "fft"]:
             continue
+        is_f32 = "goertzelf" in name
+        if is_f32:
+            name = name.replace("goertzelf", "goertzel")
+            in_data2 = in_data.astype(np.float32)
+        else:
+            in_data2 = in_data
         try:
-            fun = getattr(dsp_ext, etype.name)
+            fun = getattr(dsp_ext, name)
         except AttributeError:
-            try:
-                fun = globals()[etype.name]
-            except KeyError:
-                continue
+            fun = globals()[name]
+            # try:
+            # except KeyError:
+            #     continue
         out = np.empty_like(out_fft)
         cost_goertzel = 0
         for k in range(data_len):
             t0 = time()
-            out_k = fun(in_data, k)
+            out_k = fun(in_data2, k)
             cost_goertzel += time()-t0
             out[:, k] = out_k
         cost[etype.value] = cost_goertzel/data_len
@@ -211,7 +218,9 @@ def plot_bench(
         if np.isnan(error[k.value, :]).all():
             plt.plot(np.arange(1), np.arange(1), label="%s vs fft" % k.name)
             continue
-        plt.plot(len_range, error[k.value, :], label="%s vs fft" % k.name)
+        plt.plot(
+            len_range, 10*np.log10(error[k.value, :]),
+            label="%s vs fft" % k.name)
     plt.legend()
     plt.ylabel("error")
     plt.xlabel("length (samples)")
@@ -232,8 +241,8 @@ if __name__ == '__main__':
     bench_list = [
         # "dft",
         "fft",
-        # "goertzel",
-        "goertzel_rad4_avx",
+        "goertzelf",
+        # "goertzel_rad4_avx",
         # "goertzel_rad4x2_test",
         # "goertzel_rad8_avx",
         # "goertzel_dft",
@@ -241,8 +250,8 @@ if __name__ == '__main__':
         # "goertzel_dft_rad2_sse",
     ]
     BenchType = Enum("BenchType", bench_list, start=0)
-    len_range = np.arange(24, 25)
-    cost, error = bench_range(BenchType, len_range, cx=True, n_test=2)
+    len_range = np.arange(1000, 1001)
+    cost, error = bench_range(BenchType, len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
         print(", ".join(cost_str))
@@ -255,22 +264,6 @@ if __name__ == '__main__':
     len_range = np.concatenate((
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
-
-    # complex-value tests-------------------------------------------------------
-    bench_list = [
-        "fft",
-        "goertzel",
-        "goertzel_rad4_avx",
-        "goertzel_rad8_avx",
-        "goertzel_rad12_avx",
-    ]
-    BenchType = Enum("BenchType", bench_list, start=0)
-    cost, error = bench_range(BenchType, len_range, cx=True, n_test=n_test)
-
-    title_str = "complex input"
-    plot_bench(
-        BenchType, len_range, cost, error, bench_list, media_path, "cx",
-        title_str)
 
     # real-value tests----------------------------------------------------------
     bench_list = [
@@ -292,6 +285,9 @@ if __name__ == '__main__':
         "goertzel_rad4u2_avx",
         "goertzel_rad4u4_avx",
         "goertzel_rad4x2_test",
+        "goertzelf",
+        "goertzelf_rad2",
+        "goertzelf_rad4",
         # "goertzel_dft",
         # "goertzel_dft_rad2",
         # "goertzel_dft_rad2_sse",
@@ -374,3 +370,34 @@ if __name__ == '__main__':
         plot_bench(
             BenchType, len_range, cost, error, bench_list, media_path, "fma3",
             title_str)
+
+    # float tests---------------------------------------------------------------
+    title_str = "float32 input"
+    bench_list = [
+        "fft",
+        "goertzel",
+        "goertzelf",
+        "goertzel_rad2",
+        "goertzelf_rad2",
+        "goertzel_rad4",
+        "goertzelf_rad4",
+    ]
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "f32",
+        title_str)
+
+    # complex-value tests-------------------------------------------------------
+    bench_list = [
+        "fft",
+        "goertzel",
+        "goertzel_rad4_avx",
+        "goertzel_rad8_avx",
+        "goertzel_rad12_avx",
+    ]
+    BenchType = Enum("BenchType", bench_list, start=0)
+    cost, error = bench_range(BenchType, len_range, cx=True, n_test=n_test)
+
+    title_str = "complex input"
+    plot_bench(
+        BenchType, len_range, cost, error, bench_list, media_path, "cx",
+        title_str)

@@ -38,3 +38,6 @@ goertzelf_fun_t goertzelf;
 goertzelf_fun_t goertzelf_cx;
 goertzelf_fun_t goertzelf_rad2;
 goertzelf_fun_t goertzelf_rad4;
+goertzelf_fun_t goertzelf_rad8_avx;
+goertzelf_fun_t goertzelf_rad16_avx;
+goertzelf_fun_t goertzelf_rad24_avx;

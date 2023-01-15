@@ -150,6 +150,25 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
 #undef GOERTZEL_AVX
 #undef RADIX
 
+//------------------------------------------------------------------------------
+#define RADIX 8
+#define GOERTZEL_AVX goertzelf_rad8_avx
+#include "dspf_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 16
+#define GOERTZEL_AVX goertzelf_rad16_avx
+#include "dspf_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 24
+#define GOERTZEL_AVX goertzelf_rad24_avx
+#include "dspf_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
 #pragma GCC push_options //----------------------------------------------------
 #pragma GCC target("fma")
 

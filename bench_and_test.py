@@ -192,7 +192,8 @@ def plot_bench(
     prefix = "/".join([str(media_path), plot_prefix])
     from matplotlib import pyplot as plt
     plt.close("all")
-    plt.figure(1)
+    fig_size = (12, 9)
+    plt.figure(1, figsize=fig_size)
     for name in bench_list:
         k = BenchType[name]
         plt.plot(len_range, 10*np.log10(cost[k.value, :]), label=k.name)
@@ -202,7 +203,7 @@ def plot_bench(
     plt.title(title_str)
     plt.savefig("%s_cost_db.png" % prefix, bbox_inches="tight")
 
-    plt.figure(2)
+    plt.figure(2, figsize=fig_size)
     for name in bench_list:
         k = BenchType[name]
         plt.plot(len_range, cost[k.value, :], label=k.name)
@@ -212,15 +213,15 @@ def plot_bench(
     plt.title(title_str)
     plt.savefig("%s_cost.png" % prefix, bbox_inches="tight")
 
-    plt.figure(3)
+    plt.figure(3, figsize=fig_size)
     for name in bench_list:
         k = BenchType[name]
         if np.isnan(error[k.value, :]).all():
             plt.plot(np.arange(1), np.arange(1), label="%s vs fft" % k.name)
             continue
-        plt.plot(
-            len_range, 10*np.log10(error[k.value, :]),
-            label="%s vs fft" % k.name)
+        error_k = error[k.value, :]
+        error_k = 10*np.log10(error_k)
+        plt.plot(len_range, error_k, label="%s vs fft" % k.name)
     plt.legend()
     plt.ylabel("error")
     plt.xlabel("length (samples)")
@@ -241,7 +242,7 @@ if __name__ == '__main__':
     bench_list = [
         # "dft",
         "fft",
-        "goertzelf",
+        "goertzelf_rad8_avx",
         # "goertzel_rad4_avx",
         # "goertzel_rad4x2_test",
         # "goertzel_rad8_avx",
@@ -288,6 +289,9 @@ if __name__ == '__main__':
         "goertzelf",
         "goertzelf_rad2",
         "goertzelf_rad4",
+        "goertzelf_rad8_avx",
+        "goertzelf_rad16_avx",
+        "goertzelf_rad24_avx",
         # "goertzel_dft",
         # "goertzel_dft_rad2",
         # "goertzel_dft_rad2_sse",
@@ -381,6 +385,9 @@ if __name__ == '__main__':
         "goertzelf_rad2",
         "goertzel_rad4",
         "goertzelf_rad4",
+        "goertzelf_rad8_avx",
+        "goertzelf_rad16_avx",
+        "goertzelf_rad24_avx",
     ]
     plot_bench(
         BenchType, len_range, cost, error, bench_list, media_path, "f32",

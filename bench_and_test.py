@@ -266,7 +266,7 @@ if __name__ == '__main__':
         np.arange(1, 64), np.arange(64, 1024, 64),
         2**np.arange(10, 13)))
 
-    # real-value tests----------------------------------------------------------
+    # real-value tests---------------------------------------------------------
     bench_list = [
         "dft",
         "fft",
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         # "goertzel_dft_rad2",
         # "goertzel_dft_rad2_sse",
     ]
-    if "fma3" in cpu_flags:
+    if "fma" in cpu_flags:
         bench_list += [
             "goertzel_rad4_fma",
             "goertzel_rad8_fma",
@@ -344,8 +344,8 @@ if __name__ == '__main__':
         "goertzel_rad24_avx",
     ]
     plot_bench(
-        BenchType, len_range, cost, error, bench_list, media_path, "more_radix",
-        title_str)
+        BenchType, len_range, cost, error, bench_list, media_path,
+        "more_radix", title_str)
 
     title_str = "Influence of unrolling"
     bench_list = [
@@ -360,7 +360,7 @@ if __name__ == '__main__':
         BenchType, len_range, cost, error, bench_list, media_path, "unroll",
         title_str)
 
-    if "fma3" in cpu_flags:
+    if "fma" in cpu_flags:
         title_str = "AVX vs FMA3"
         bench_list = [
             "goertzel",
@@ -375,7 +375,7 @@ if __name__ == '__main__':
             BenchType, len_range, cost, error, bench_list, media_path, "fma3",
             title_str)
 
-    # float tests---------------------------------------------------------------
+    # float tests--------------------------------------------------------------
     title_str = "float32 input"
     bench_list = [
         "fft",
@@ -393,7 +393,7 @@ if __name__ == '__main__':
         BenchType, len_range, cost, error, bench_list, media_path, "f32",
         title_str)
 
-    # complex-value tests-------------------------------------------------------
+    # complex-value tests------------------------------------------------------
     bench_list = [
         "fft",
         "goertzel",

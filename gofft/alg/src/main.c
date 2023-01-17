@@ -137,6 +137,7 @@ DEF_DSP(goertzel_rad12_avx, &goertzel_rad12_cx_avx, NULL, NULL)
 DEF_DSP(goertzel_rad16_avx, NULL, &goertzelf_rad16_avx, NULL)
 DEF_DSP(goertzel_rad20_avx, NULL, NULL, NULL)
 DEF_DSP(goertzel_rad24_avx, NULL, &goertzelf_rad24_avx, NULL)
+DEF_DSP(goertzel_rad40_avx, NULL, &goertzelf_rad40_avx, NULL)
 DEF_DSP(goertzel_rad4x2_test, NULL, NULL, NULL)
 DEF_DSP(goertzel_rad4_fma, NULL, NULL, NULL)
 DEF_DSP(goertzel_rad8_fma, NULL, NULL, NULL)
@@ -202,6 +203,10 @@ static PyMethodDef methods[] = {
     {
         "goertzel_rad24_avx", dsp_goertzel_rad24_avx, METH_VARARGS,
         "Goertzel radix-24 algorithm using AVX instructions."
+    },
+    {
+        "goertzel_rad40_avx", dsp_goertzel_rad40_avx, METH_VARARGS,
+        "Goertzel radix-40 algorithm using AVX instructions."
     },
     {
         "goertzel_rad4x2_test", dsp_goertzel_rad4x2_test, METH_VARARGS,

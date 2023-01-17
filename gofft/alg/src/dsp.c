@@ -131,6 +131,12 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
 #undef GOERTZEL_AVX
 #undef RADIX
 
+#define RADIX 40
+#define GOERTZEL_AVX goertzel_rad40_avx
+#include "dsp_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
 //------------------------------------------------------------------------------
 #define RADIX 8
 #define GOERTZEL_AVX goertzel_rad4_cx_avx
@@ -165,6 +171,12 @@ void goertzel_rad2_sse(double *data, long data_len, double k, double *out)
 
 #define RADIX 24
 #define GOERTZEL_AVX goertzelf_rad24_avx
+#include "dspf_avx.c"
+#undef GOERTZEL_AVX
+#undef RADIX
+
+#define RADIX 40
+#define GOERTZEL_AVX goertzelf_rad40_avx
 #include "dspf_avx.c"
 #undef GOERTZEL_AVX
 #undef RADIX

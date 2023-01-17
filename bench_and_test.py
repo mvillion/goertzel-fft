@@ -283,6 +283,7 @@ if __name__ == '__main__':
         "goertzel_rad16_avx",
         "goertzel_rad20_avx",
         "goertzel_rad24_avx",
+        "goertzel_rad40_avx",
         "goertzel_rad4u2_avx",
         "goertzel_rad4u4_avx",
         "goertzel_rad4x2_test",
@@ -292,6 +293,7 @@ if __name__ == '__main__':
         "goertzelf_rad8_avx",
         "goertzelf_rad16_avx",
         "goertzelf_rad24_avx",
+        "goertzelf_rad40_avx",
         # "goertzel_dft",
         # "goertzel_dft_rad2",
         # "goertzel_dft_rad2_sse",
@@ -342,6 +344,7 @@ if __name__ == '__main__':
         "goertzel_rad16_avx",
         "goertzel_rad20_avx",
         "goertzel_rad24_avx",
+        "goertzel_rad40_avx",
     ]
     plot_bench(
         BenchType, len_range, cost, error, bench_list, media_path,
@@ -388,6 +391,7 @@ if __name__ == '__main__':
         "goertzelf_rad8_avx",
         "goertzelf_rad16_avx",
         "goertzelf_rad24_avx",
+        "goertzelf_rad40_avx",
     ]
     plot_bench(
         BenchType, len_range, cost, error, bench_list, media_path, "f32",

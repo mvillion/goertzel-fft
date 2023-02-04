@@ -140,28 +140,29 @@ DEF_DSP(goertzel_rad24_avx, NULL, &goertzelf_rad24_avx, NULL)
 DEF_DSP(goertzel_rad40_avx, NULL, &goertzelf_rad40_avx, NULL)
 DEF_DSP(goertzel_rad4x2_test, NULL, NULL, NULL)
 DEF_DSP(goertzel_rad4_fma, NULL, NULL, NULL)
-DEF_DSP(goertzel_rad8_fma, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad8_fma, NULL, &goertzelf_rad8_fma, NULL)
 DEF_DSP(goertzel_rad20_fma, NULL, NULL, NULL)
+DEF_DSP(goertzel_rad24_fma, NULL, &goertzelf_rad24_fma, NULL)
 #undef DEF_DSP
 
-#define DEF_DSP_DFT(name, fun_cx) \
+#define DEF_DSP_DFT(name, fun_cx, funf, funf_cx) \
 static PyObject* dsp_ ## name (PyObject* self, PyObject* args) \
 { \
     return dsp_goertzel_dft_template(self, args, &name, fun_cx); \
 }
-DEF_DSP_DFT(goertzel_dft, &goertzel_cx_dft)
-DEF_DSP_DFT(goertzel_rad2_dft, NULL)
-DEF_DSP_DFT(goertzel_rad2_sse_dft, NULL)
-DEF_DSP_DFT(goertzel_rad4_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad8_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad12_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad16_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad20_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad24_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad40_avx_dft, NULL)
-DEF_DSP_DFT(goertzel_rad4_fma_dft, NULL)
-DEF_DSP_DFT(goertzel_rad8_fma_dft, NULL)
-DEF_DSP_DFT(goertzel_rad20_fma_dft, NULL)
+DEF_DSP_DFT(goertzel_dft, &goertzel_cx_dft, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad2_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad2_sse_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad4_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad8_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad12_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad16_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad20_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad24_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad40_avx_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad4_fma_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad8_fma_dft, NULL, NULL, NULL)
+DEF_DSP_DFT(goertzel_rad20_fma_dft, NULL, NULL, NULL)
 #undef DEF_DSP_DFT
 
 #define stringify(x) #x
@@ -217,6 +218,7 @@ DEF_DSP(40, avx)
 DEF_DSP(4, fma)
 DEF_DSP(8, fma)
 DEF_DSP(20, fma)
+DEF_DSP(24, fma)
     {
         "goertzel_dft", dsp_goertzel_dft, METH_VARARGS,
         "Goertzel algorithm to compute dft."

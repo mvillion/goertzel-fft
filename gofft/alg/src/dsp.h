@@ -29,6 +29,7 @@ goertzel_fun_t goertzel_rad4x2_test;
 goertzel_fun_t goertzel_rad4_fma;
 goertzel_fun_t goertzel_rad8_fma;
 goertzel_fun_t goertzel_rad20_fma;
+goertzel_fun_t goertzel_rad24_fma;
 
 goertzel_fun_t goertzel_dft;
 goertzel_fun_t goertzel_cx_dft;
@@ -53,3 +54,8 @@ goertzelf_fun_t goertzelf_rad8_avx;
 goertzelf_fun_t goertzelf_rad16_avx;
 goertzelf_fun_t goertzelf_rad24_avx;
 goertzelf_fun_t goertzelf_rad40_avx;
+goertzelf_fun_t goertzelf_rad8_fma;
+goertzelf_fun_t goertzelf_rad24_fma;
+// goertzelf_fun_t goertzelf_rad4_fma_dft;
+// goertzelf_fun_t goertzelf_rad8_fma_dft;
+// goertzelf_fun_t goertzelf_rad20_fma_dft;

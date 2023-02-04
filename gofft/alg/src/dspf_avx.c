@@ -1,5 +1,6 @@
 // code for radix-RADIX with single frequency
-void GOERTZEL_AVX(float *data, long data_len, float k, float *out)
+static void concat(GOERTZEL_AVX, _core)(
+    float *data, long data_len, float k, float *iq, long int *n_pad)
 {
     float omega = 2.0*M_PI*RADIX*k/data_len;
     float sw = sinf(omega);
@@ -59,7 +60,8 @@ void GOERTZEL_AVX(float *data, long data_len, float k, float *out)
             q2[m] = q1[m];
             q1[m] = q0[m];
         }
-    float iq[RADIX*2];
+    *n_pad = i-data_len;
+
     for (int m = 0; m < RADIX/8; m++)
     {
         __m256 datai8 = _mm256_mul_ps(q1[m], _mm256_set1_ps(cw));
@@ -82,16 +84,24 @@ void GOERTZEL_AVX(float *data, long data_len, float k, float *out)
         iq[16*m+14] = datai8[7];
         iq[16*m+15] = dataq8[7];
     }
+}
+
+void GOERTZEL_AVX(float *data, long data_len, float k, float *out)
+{
+    float iq[RADIX*2];
+    long int n_pad;
+    concat(GOERTZEL_AVX, _core)(data, data_len, k, iq, &n_pad);
 
     goertzelf_cx(iq, RADIX, k*RADIX/data_len, out);
 
-    long int n_pad = i-data_len;
-    omega = -2.0*M_PI*(RADIX+n_pad)*k/data_len;
-    sw = sinf(omega);
-    cw = cosf(omega);
+    float omega = -2.0*M_PI*(RADIX+n_pad)*k/data_len;
+    float sw = sinf(omega);
+    float cw = cosf(omega);
 
     float i_t = out[0];
     // (cw+j*sw)*(i1+j*q1)
     out[0] = i_t*cw-out[1]*sw;
     out[1] = i_t*sw+out[1]*cw;
 }
+
+

@@ -433,10 +433,10 @@ if __name__ == '__main__':
         # "goertzelf_rad2",
         # "goertzel_rad4",
         # "goertzelf_rad4",
-        # "goertzelf_rad8_avx",
-        # "goertzelf_rad16_avx",
-        # "goertzelf_rad24_avx",
-        # "goertzelf_rad40_avx",
+        "goertzelf_rad8_avx",
+        "goertzelf_rad16_avx",
+        "goertzelf_rad24_avx",
+        "goertzelf_rad40_avx",
     ]
     plot_bench(
         BenchType, len_range, cost, error, bench_list, media_path, "f32",

@@ -153,7 +153,21 @@ DEF_DSP_DFT(goertzel_dft, &goertzel_cx_dft)
 DEF_DSP_DFT(goertzel_rad2_dft, NULL)
 DEF_DSP_DFT(goertzel_rad2_sse_dft, NULL)
 DEF_DSP_DFT(goertzel_rad4_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad8_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad12_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad16_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad20_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad24_avx_dft, NULL)
+DEF_DSP_DFT(goertzel_rad40_avx_dft, NULL)
 
+#define stringify(x) #x
+#define DEF_DSP_DFT_AVX(radix) \
+    { \
+        stringify(goertzel_rad ## radix ## _avx_dft), \
+        dsp_goertzel_rad ## radix ## _avx_dft, METH_VARARGS, \
+        "Goertzel radix-" stringify(radix) \
+        " algorithm using AVX instructions to compute dft." \
+    },
 /* Set up the methods table */
 static PyMethodDef methods[] = {
     {
@@ -237,10 +251,13 @@ static PyMethodDef methods[] = {
         "goertzel_rad2_sse_dft", dsp_goertzel_rad2_sse_dft, METH_VARARGS,
         "Goertzel radix-2 algorithm using SSE instructions to compute dft."
     },
-    {
-        "goertzel_rad4_avx_dft", dsp_goertzel_rad4_avx_dft, METH_VARARGS,
-        "Goertzel radix-4 algorithm using AVX instructions to compute dft."
-    },
+DEF_DSP_DFT_AVX(4)
+DEF_DSP_DFT_AVX(8)
+DEF_DSP_DFT_AVX(12)
+DEF_DSP_DFT_AVX(16)
+DEF_DSP_DFT_AVX(20)
+DEF_DSP_DFT_AVX(24)
+DEF_DSP_DFT_AVX(40)
     {NULL, NULL, 0, NULL} // sentinel
 };
 

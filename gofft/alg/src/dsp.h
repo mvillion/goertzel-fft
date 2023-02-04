@@ -35,6 +35,12 @@ goertzel_fun_t goertzel_cx_dft;
 goertzel_fun_t goertzel_rad2_dft;
 goertzel_fun_t goertzel_rad2_sse_dft;
 goertzel_fun_t goertzel_rad4_avx_dft;
+goertzel_fun_t goertzel_rad8_avx_dft;
+goertzel_fun_t goertzel_rad12_avx_dft;
+goertzel_fun_t goertzel_rad16_avx_dft;
+goertzel_fun_t goertzel_rad20_avx_dft;
+goertzel_fun_t goertzel_rad24_avx_dft;
+goertzel_fun_t goertzel_rad40_avx_dft;
 
 goertzelf_fun_t goertzelf;
 goertzelf_fun_t goertzelf_cx;

@@ -128,7 +128,8 @@ static void concat(GOERTZEL_AVX, _dft_slow)(
 //     {
 //         double iq[RADIX*2];
 //         long int n_pad;
-//         concat(GOERTZEL_AVX, _core)(data, n_radix*RADIX, (double)i, iq, &n_pad);
+//         concat(GOERTZEL_AVX, _core)(
+//             data, n_radix*RADIX, (double)i, iq, &n_pad);
 //
 //         goertzel_cx(iq, RADIX, (double)i/n_radix, out);
 //
@@ -153,10 +154,11 @@ static void concat(GOERTZEL_AVX, _dft_fast)(
 {
     double iq[RADIX*2];
     long int n_pad;
-    for (long i_radix = 0; i_radix < n_radix; i_radix++)
-        for (long r = 0; r < RADIX; r++)
+    for (long i = 0; i < n_radix*RADIX; i++)
+//     for (long i_radix = 0; i_radix < n_radix; i_radix++)
+//         for (long r = 0; r < RADIX; r++)
         {
-            long i = n_radix*r+i_radix;
+//             long i = n_radix*r+i_radix;
             concat(GOERTZEL_AVX, _core)(
                 data, n_radix*RADIX, (double)i, iq, &n_pad);
 
@@ -173,6 +175,40 @@ static void concat(GOERTZEL_AVX, _dft_fast)(
             out += 2;
         }
 }
+
+// static void concat(GOERTZEL_AVX, _dft_fast)(
+//     double *data, long n_radix, double k, double *out)
+// {
+//     double iq[RADIX*2];
+//     long int n_pad;
+//     for (long i_radix = 0; i_radix < n_radix; i_radix++)
+//     {
+// //         // omega = 2.0*M_PI*RADIX*(n_radix*r+i_radix)/(n_radix*RADIX)
+// //         // omega = 2.0*M_PI*(n_radix*r+i_radix)/n_radix
+// //         // omega = 2.0*M_PI*i_radix/n_radix
+// //         // omega does not depend on r
+// //         concat(GOERTZEL_AVX, _core)(
+// //             data, n_radix*RADIX, (double)i_radix, iq, &n_pad);
+//
+//         for (long r = 0; r < RADIX; r++)
+//         {
+//             long i = n_radix*r+i_radix;
+//             concat(GOERTZEL_AVX, _core)(
+//                 data, n_radix*RADIX, (double)i, iq, &n_pad);
+//             goertzel_cx(iq, RADIX, (double)i/n_radix, out);
+//
+//             double omega = -2.0*M_PI*(RADIX+n_pad)*i/(n_radix*RADIX);
+//             double sw = sin(omega);
+//             double cw = cos(omega);
+//
+//             double i_t = out[0];
+//             // (cw+j*sw)*(i1+j*q1)
+//             out[0] = i_t*cw-out[1]*sw;
+//             out[1] = i_t*sw+out[1]*cw;
+//             out += 2;
+//         }
+//     }
+// }
 
 void concat(GOERTZEL_AVX, _dft)(
     double *data, long data_len, double k, double *out)

@@ -6,6 +6,7 @@ from cpuinfo import get_cpu_info
 from enum import Enum
 from gofft_directory import dsp_ext
 from pathlib import Path
+from pyfftw.interfaces import numpy_fft
 from time import time
 
 
@@ -101,21 +102,37 @@ def goertzel_rad8_py(data, k):
 
 def bench_goertzel(BenchType, data_len, cx=False, n_test=10000):
     rng = np.random.Generator(np.random.SFC64())
-    in_data = rng.random((n_test, data_len), np.float64)
+    dtype = np.float32
+    in_data = rng.random((n_test, data_len), dtype)
     if cx:
-        in_data = in_data+1j*rng.random((n_test, data_len), np.float64)
+        in_data = in_data+1j*rng.random((n_test, data_len), dtype)
+    in_data = in_data.astype(np.float64)
 
     cost = np.empty(len(BenchType))
     error = np.empty(len(BenchType))
 
     # fft
-    t0 = time()
-    out_fft = np.fft.fft(in_data)
-    try:
-        cost[BenchType.fft.value] = time()-t0
-        error[BenchType.fft.value] = np.nan
-    except AttributeError:
-        pass
+    for name in ["fft", "fftf"]:
+        try:
+            etype = BenchType[name]
+        except KeyError:
+            continue
+        is_f32 = name in ["fftf"]
+        if is_f32:
+            in_data2 = in_data.astype(np.float32)
+            t0 = time()
+            out = numpy_fft.fft(in_data2)
+            cost[etype.value] = time()-t0
+        else:
+            t0 = time()
+            out = np.fft.fft(in_data)
+            cost[etype.value] = time()-t0
+            out_fft = out
+
+        if is_f32:
+            error[etype.value] = (out-out_fft).std(axis=-1).max()
+        else:
+            error[etype.value] = np.nan
 
     # dft, protection against memory errors
     try:
@@ -146,7 +163,7 @@ def bench_goertzel(BenchType, data_len, cx=False, n_test=10000):
 
     for etype in BenchType:
         name = etype.name
-        if "_dft" in name or name in ["dft", "fft"]:
+        if "_dft" in name or name in ["dft", "fft", "fftf"]:
             continue
         is_f32 = "goertzelf" in name
         if is_f32:
@@ -247,11 +264,12 @@ if __name__ == '__main__':
         # "goertzel_rad4x2_test",
         # "goertzel_rad8_avx",
         # "goertzel_dft",
-        # "goertzel_dft_rad2",
-        # "goertzel_dft_rad2_sse",
+        # "goertzel_rad2_dft",
+        "goertzel_rad2_sse_dft",
+        "goertzel_rad4_avx_dft",
     ]
     BenchType = Enum("BenchType", bench_list, start=0)
-    len_range = np.arange(1000, 1001)
+    len_range = np.arange(1024, 1026)
     cost, error = bench_range(BenchType, len_range, n_test=2)
     for m, data_len in enumerate(len_range):
         cost_str = ["%s %f" % (k.name, error[k.value, m]) for k in BenchType]
@@ -270,6 +288,7 @@ if __name__ == '__main__':
     bench_list = [
         "dft",
         "fft",
+        "fftf",
         "goertzel",
         "goertzel_rad2_py",
         "goertzel_radix_py",
@@ -295,8 +314,15 @@ if __name__ == '__main__':
         "goertzelf_rad24_avx",
         "goertzelf_rad40_avx",
         # "goertzel_dft",
-        # "goertzel_dft_rad2",
-        # "goertzel_dft_rad2_sse",
+        # "goertzel_rad2_dft",
+        # "goertzel_rad2_sse_dft",
+        # # "goertzel_rad4_avx_dft",
+        # # "goertzel_rad8_avx_dft",
+        # "goertzel_rad12_avx_dft",
+        # "goertzel_rad16_avx_dft",
+        # "goertzel_rad20_avx_dft",
+        # # "goertzel_rad24_avx_dft",
+        # "goertzel_rad40_avx_dft",
     ]
     if "fma" in cpu_flags:
         bench_list += [
@@ -306,6 +332,24 @@ if __name__ == '__main__':
         ]
     BenchType = Enum("BenchType", bench_list, start=0)
     cost, error = bench_range(BenchType, len_range, n_test=n_test)
+
+    # title_str = "Goertzel DFT vs FFT"
+    # bench_list = [
+    #     "fft",
+    #     "goertzel",
+    #     # "goertzel_rad2_dft",
+    #     # "goertzel_rad2_sse_dft",
+    #     # "goertzel_rad4_avx_dft",
+    #     # "goertzel_rad8_avx_dft",
+    #     "goertzel_rad12_avx_dft",
+    #     "goertzel_rad16_avx_dft",
+    #     "goertzel_rad20_avx_dft",
+    #     # "goertzel_rad24_avx_dft",
+    #     "goertzel_rad40_avx_dft",
+    # ]
+    # plot_bench(
+    #     BenchType, len_range, cost, error, bench_list, media_path, "dft",
+    #     title_str)
 
     title_str = "archived"
     bench_list = [
@@ -382,16 +426,17 @@ if __name__ == '__main__':
     title_str = "float32 input"
     bench_list = [
         "fft",
+        "fftf",
         "goertzel",
         "goertzelf",
-        "goertzel_rad2",
-        "goertzelf_rad2",
-        "goertzel_rad4",
-        "goertzelf_rad4",
-        "goertzelf_rad8_avx",
-        "goertzelf_rad16_avx",
-        "goertzelf_rad24_avx",
-        "goertzelf_rad40_avx",
+        # "goertzel_rad2",
+        # "goertzelf_rad2",
+        # "goertzel_rad4",
+        # "goertzelf_rad4",
+        # "goertzelf_rad8_avx",
+        # "goertzelf_rad16_avx",
+        # "goertzelf_rad24_avx",
+        # "goertzelf_rad40_avx",
     ]
     plot_bench(
         BenchType, len_range, cost, error, bench_list, media_path, "f32",

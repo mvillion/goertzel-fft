@@ -31,9 +31,10 @@ goertzel_fun_t goertzel_rad8_fma;
 goertzel_fun_t goertzel_rad20_fma;
 
 goertzel_fun_t goertzel_dft;
-goertzel_fun_t goertzel_dft_cx;
-goertzel_fun_t goertzel_dft_rad2;
-goertzel_fun_t goertzel_dft_rad2_sse;
+goertzel_fun_t goertzel_cx_dft;
+goertzel_fun_t goertzel_rad2_dft;
+goertzel_fun_t goertzel_rad2_sse_dft;
+goertzel_fun_t goertzel_rad4_avx_dft;
 
 goertzelf_fun_t goertzelf;
 goertzelf_fun_t goertzelf_cx;

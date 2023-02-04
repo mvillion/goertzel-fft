@@ -4,6 +4,9 @@
 #include <sys/param.h>
 #include "dsp.h"
 
+#define concat2(X, Y) X ## Y
+#define concat(X, Y) concat2(X, Y)
+
 #define FLT_TYPE double
 #define GOERTZEL_PREFIX(a) goertzel ## a
 #include "dsp_simple.c"
@@ -253,7 +256,7 @@ void goertzel_dft(double *data, long data_len, double k, double *out)
     }
 }
 
-void goertzel_dft_cx(double *data, long data_len, double k, double *out)
+void goertzel_cx_dft(double *data, long data_len, double k, double *out)
 {
     for (long i = 0; i < data_len; i++)
     {
@@ -262,7 +265,7 @@ void goertzel_dft_cx(double *data, long data_len, double k, double *out)
     }
 }
 
-void goertzel_dft_rad2(double *data, long data_len, double k, double *out)
+void goertzel_rad2_dft(double *data, long data_len, double k, double *out)
 {
     double *out_end = out+2*data_len;
 
@@ -280,7 +283,7 @@ void goertzel_dft_rad2(double *data, long data_len, double k, double *out)
     }
 }
 
-void goertzel_dft_rad2_sse(double *data, long data_len, double k, double *out)
+void goertzel_rad2_sse_dft(double *data, long data_len, double k, double *out)
 {
     double *out_end = out+2*data_len;
 

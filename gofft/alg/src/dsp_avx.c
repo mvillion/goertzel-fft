@@ -1,5 +1,6 @@
 // code for radix-RADIX with single frequency
-void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
+static void concat(GOERTZEL_AVX, _core)(
+    double *data, long data_len, double k, double *iq, long int *n_pad)
 {
     double omega = 2.0*M_PI*RADIX*k/data_len;
     double sw = sin(omega);
@@ -59,7 +60,8 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
             q2[m] = q1[m];
             q1[m] = q0[m];
         }
-    double iq[RADIX*2];
+    *n_pad = i-data_len;
+
     for (int m = 0; m < RADIX/4; m++)
     {
         __m256d datai4 = _mm256_mul_pd(q1[m], _mm256_set1_pd(cw));
@@ -74,18 +76,111 @@ void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
         iq[8*m+6] = datai4[3];
         iq[8*m+7] = dataq4[3];
     }
+}
+
+void GOERTZEL_AVX(double *data, long data_len, double k, double *out)
+{
+    double iq[RADIX*2];
+    long int n_pad;
+    concat(GOERTZEL_AVX, _core)(data, data_len, k, iq, &n_pad);
 
     goertzel_cx(iq, RADIX, k*RADIX/data_len, out);
 
-    long int n_pad = i-data_len;
-    omega = -2.0*M_PI*(RADIX+n_pad)*k/data_len;
-    sw = sin(omega);
-    cw = cos(omega);
+    double omega = -2.0*M_PI*(RADIX+n_pad)*k/data_len;
+    double sw = sin(omega);
+    double cw = cos(omega);
 
     double i_t = out[0];
     // (cw+j*sw)*(i1+j*q1)
     out[0] = i_t*cw-out[1]*sw;
     out[1] = i_t*sw+out[1]*cw;
+}
+
+static void concat(GOERTZEL_AVX, _dft_slow)(
+    double *data, long data_len, double k, double *out)
+{
+    double *out_end = out+2*data_len;
+
+    goertzel(data, data_len, (double)0, out);
+    out += 2;
+    out_end -= 2;
+
+    for (long i = 1; i < data_len/2+1; i++)
+    {
+        GOERTZEL_AVX(data, data_len, (double)i, out);
+        out_end[0] = out[0];
+        out_end[1] = -out[1];
+        out += 2;
+        out_end -= 2;
+    }
+}
+
+// static void concat(GOERTZEL_AVX, _dft_fast)(
+//     double *data, long n_radix, double k, double *out)
+// {
+//     double *out_end = out+2*n_radix*RADIX;
+//
+//     goertzel(data, n_radix*RADIX, (double)0, out);
+//     out += 2;
+//     out_end -= 2;
+//
+//     for (long i = 1; i < n_radix*RADIX/2+1; i++)
+//     {
+//         double iq[RADIX*2];
+//         long int n_pad;
+//         concat(GOERTZEL_AVX, _core)(data, n_radix*RADIX, (double)i, iq, &n_pad);
+//
+//         goertzel_cx(iq, RADIX, (double)i/n_radix, out);
+//
+//         double omega = -2.0*M_PI*(RADIX+n_pad)*i/(n_radix*RADIX);
+//         double sw = sin(omega);
+//         double cw = cos(omega);
+//
+//         double i_t = out[0];
+//         // (cw+j*sw)*(i1+j*q1)
+//         out[0] = i_t*cw-out[1]*sw;
+//         out[1] = i_t*sw+out[1]*cw;
+//
+//         out_end[0] = out[0];
+//         out_end[1] = -out[1];
+//         out += 2;
+//         out_end -= 2;
+//     }
+// }
+
+static void concat(GOERTZEL_AVX, _dft_fast)(
+    double *data, long n_radix, double k, double *out)
+{
+    double iq[RADIX*2];
+    long int n_pad;
+    for (long i_radix = 0; i_radix < n_radix; i_radix++)
+        for (long r = 0; r < RADIX; r++)
+        {
+            long i = n_radix*r+i_radix;
+            concat(GOERTZEL_AVX, _core)(
+                data, n_radix*RADIX, (double)i, iq, &n_pad);
+
+            goertzel_cx(iq, RADIX, (double)i/n_radix, out);
+
+            double omega = -2.0*M_PI*(RADIX+n_pad)*i/(n_radix*RADIX);
+            double sw = sin(omega);
+            double cw = cos(omega);
+
+            double i_t = out[0];
+            // (cw+j*sw)*(i1+j*q1)
+            out[0] = i_t*cw-out[1]*sw;
+            out[1] = i_t*sw+out[1]*cw;
+            out += 2;
+        }
+}
+
+void concat(GOERTZEL_AVX, _dft)(
+    double *data, long data_len, double k, double *out)
+{
+    if (data_len % RADIX == 0)
+        concat(GOERTZEL_AVX, _dft_fast)(data, data_len/RADIX, k, out);
+    else
+        concat(GOERTZEL_AVX, _dft_slow)(data, data_len, k, out);
 }
 
 // cos(2*w) = 1-2*sin(w)*sin(w)
